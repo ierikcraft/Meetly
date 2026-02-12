@@ -3,297 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meetly</title>
+    <title>Meetly - Social & Match</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #ffd1dc;
-            --match-bg: #800000;
+            --bg-color: #ffd1dc; /* Rosa Pastel */
+            --match-bg: #800000; /* Granate */
             --primary: #ff5e78;
             --white: #ffffff;
-            --text: #333333;
+            --text: #262626;
+            --gray: #fafafa;
+            --border: #dbdbdb;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
 
         body {
             background-color: var(--bg-color);
             color: var(--text);
+            transition: background-color 0.8s ease-in-out; /* Transición suave al match */
             height: 100vh;
-            width: 100vw;
             display: flex;
             justify-content: center;
+            align-items: center;
             overflow: hidden;
         }
 
+        /* Contenedor tipo App Móvil */
         #app-container {
-            width: 100%; max-width: 450px; background: var(--white);
-            height: 100%; position: relative;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 414px; /* Tamaño iPhone Max */
+            height: 100%;
+            max-height: 900px;
+            background: var(--white);
+            display: flex;
+            flex-direction: column;
+            position: relative;
             overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        /* --- VISTAS --- */
-        .view { 
+        @media (min-width: 450px) {
+            #app-container { height: 90vh; border-radius: 30px; }
+        }
+
+        /* Vistas */
+        .view {
+            flex: 1;
+            display: none;
+            overflow-y: auto;
+            flex-direction: column;
+            background: white;
+        }
+        .view.active { display: flex; }
+
+        /* AUTH VIEW */
+        #auth-view { justify-content: center; padding: 40px; text-align: center; }
+        .logo { font-family: 'Billabong', cursive; font-size: 3rem; margin-bottom: 30px; display: block; }
+        input {
+            width: 100%; padding: 12px; margin: 8px 0; background: #fafafa;
+            border: 1px solid var(--border); border-radius: 3px; outline: none; font-size: 14px;
+        }
+        button.btn-primary {
+            width: 100%; padding: 10px; background: #0095f6;
+            color: white; border: none; border-radius: 4px; font-weight: 600;
+            cursor: pointer; margin-top: 15px;
+        }
+        .auth-switch { margin-top: 20px; font-size: 14px; color: #0095f6; cursor: pointer; }
+
+        /* HEADER & NAVBAR */
+        .app-header {
+            height: 50px; border-bottom: 1px solid var(--border); display: flex;
+            align-items: center; justify-content: space-between; padding: 0 15px;
+            background: white; z-index: 10; font-weight: bold; font-size: 1.2rem;
+        }
+        
+        .navbar {
+            height: 50px; border-top: 1px solid var(--border); display: flex;
+            justify-content: space-around; align-items: center; background: white; z-index: 10;
+        }
+        .nav-icon { font-size: 24px; color: #262626; cursor: pointer; transition: transform 0.1s;}
+        .nav-icon:active { transform: scale(0.9); }
+        .nav-icon.active { color: var(--primary); }
+
+        /* PERFIL (Instagram Style) */
+        .profile-top { padding: 20px 15px; display: flex; align-items: center; }
+        .profile-img-container { margin-right: 20px; position: relative; }
+        .profile-img {
+            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+            border: 1px solid var(--border); padding: 2px;
+        }
+        .profile-stats { display: flex; gap: 20px; text-align: center; flex: 1; justify-content: space-around; }
+        .stat-val { font-weight: bold; display: block; font-size: 18px; }
+        .stat-label { font-size: 12px; color: #8e8e8e; }
+        
+        .bio-section { padding: 0 15px 15px; font-size: 14px; }
+        .bio-name { font-weight: bold; }
+        
+        /* Destacadas */
+        .highlights { display: flex; gap: 15px; overflow-x: auto; padding: 0 15px 15px; scrollbar-width: none; }
+        .highlight-item { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
+        .highlight-circle {
+            width: 60px; height: 60px; border-radius: 50%; border: 1px solid #dbdbdb; padding: 2px;
+            display: flex; align-items: center; justify-content: center; background: #fafafa;
+        }
+        .highlight-circle i { font-size: 24px; color: #262626; }
+        .highlight-text { font-size: 11px; margin-top: 5px; }
+
+        /* Grid Fotos */
+        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+        .grid-item { position: relative; padding-bottom: 100%; background: #efefef; overflow: hidden; }
+        .grid-item img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
+        .add-post-btn { 
+            grid-column: 1 / -1; padding: 10px; margin: 10px; text-align: center; 
+            border: 1px dashed #ccc; color: #888; cursor: pointer; 
+        }
+
+        /* SWIPE / MATCH (Tinder Style) */
+        #swipe-view { position: relative; background: #f0f0f0; }
+        .card-container {
+            flex: 1; position: relative; margin: 15px; display: flex; justify-content: center;
+        }
+        .tinder-card {
+            position: absolute; width: 100%; height: 100%; max-height: 550px;
+            background: white; border-radius: 10px; overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+        }
+        .tinder-card img { width: 100%; height: 75%; object-fit: cover; }
+        .card-details { padding: 15px; height: 25%; background: white; }
+        .card-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+        
+        .controls {
+            height: 80px; display: flex; justify-content: center; align-items: center; gap: 30px; padding-bottom: 10px;
+        }
+        .control-btn {
+            width: 60px; height: 60px; border-radius: 50%; background: white;
+            border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer;
+            font-size: 24px; display: flex; align-items: center; justify-content: center;
+            transition: transform 0.2s;
+        }
+        .control-btn:active { transform: scale(0.9); }
+        .btn-pass { color: #ff3b30; border: 1px solid #ff3b30; } /* Izquierda */
+        .btn-match { color: #4cd964; border: 1px solid #4cd964; } /* Derecha */
+
+        /* CHAT */
+        .chat-row {
+            padding: 12px 15px; display: flex; align-items: center; border-bottom: 1px solid #efefef; cursor: pointer;
+        }
+        .chat-row:hover { background: #fafafa; }
+        .chat-avatar { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; background: #ddd; }
+        .chat-preview { flex: 1; }
+        .chat-name { font-weight: 600; font-size: 14px; }
+        .chat-msg { color: #8e8e8e; font-size: 13px; margin-top: 2px; }
+        .streak-badge { color: #ff9500; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 4px; }
+
+        /* PANTALLA CONVERSACIÓN */
+        #conversation-view { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: var(--white); display: none; flex-direction: column;
-            overflow-y: auto; padding-bottom: 70px; z-index: 10;
+            background: white; z-index: 50; display: none; flex-direction: column; 
         }
-        .view.active { display: flex; z-index: 20; }
-        
-        /* --- ESTILOS GENERALES --- */
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fafafa; }
-        .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-secondary { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
-        .btn-follow { background: var(--primary); color: white; border: none; }
-        
-        /* --- AUTH --- */
-        #auth-view { justify-content: center; align-items: center; padding: 30px; text-align: center; }
-
-        /* --- FEED & STORIES --- */
-        .stories-bar { padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
-        .story-item { display: flex; flex-direction: column; align-items: center; width: 70px; flex-shrink: 0; cursor: pointer; }
-        .story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
-        .story-ring.add { background: none; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; }
-        .story-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid white; background: white; }
-        .story-name { font-size: 11px; margin-top: 5px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;}
-
-        .feed-post { margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .post-header { padding: 10px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; }
-        .post-avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .post-image { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: #f0f0f0; }
-        .post-actions { padding: 10px; font-size: 24px; gap: 15px; display: flex; }
-        
-        /* --- SEARCH VIEW --- */
-        #search-view { padding: 0; }
-        .search-header { padding: 15px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; z-index: 5; }
-        .search-bar { background: #eee; border-radius: 10px; padding: 8px 15px; display: flex; align-items: center; }
-        .search-bar input { margin: 0; padding: 5px; border: none; background: transparent; }
-        .user-result { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
-        .user-result:hover { background: #fafafa; }
-        .user-result img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; }
-
-        /* --- PROFILE --- */
-        .profile-header { padding: 20px 20px 10px 20px; display: flex; align-items: center; }
-        .profile-pic-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 1px solid #ddd; background: #eee; }
-        .stats { display: flex; gap: 10px; text-align: center; flex: 1; justify-content: space-around; }
-        .stat-num { font-weight: bold; font-size: 18px; display: block; }
-        .stat-label { font-size: 12px; color: #666; }
-        .profile-bio-sec { padding: 0 20px; }
-        
-        /* Highlights */
-        .highlights-sec { padding: 15px 10px; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; }
-        .highlight-item { display: flex; flex-direction: column; align-items: center; width: 65px; flex-shrink: 0; cursor: pointer; }
-        .hl-circle { width: 60px; height: 60px; border-radius: 50%; border: 1px solid #ddd; padding: 2px; background: white; }
-        .hl-circle.add { border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #555; }
-        .hl-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #eee; }
-        .hl-title { font-size: 11px; margin-top: 5px; text-align: center; }
-
-        .posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 10px; }
-        .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; background: #eee; }
-
-        /* --- NAVBAR --- */
-        .navbar { position: absolute; bottom: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 500; }
-        .nav-item { font-size: 24px; color: #ccc; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
-
-        /* --- OVERLAYS --- */
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
-        .modal-box { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 350px; }
-        
-        /* Story Viewer */
-        #story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2000; display: none; flex-direction: column; }
-        .progress-bar { height: 3px; background: rgba(255,255,255,0.3); margin: 10px; border-radius: 2px; overflow: hidden; }
-        .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
-        .story-header { padding: 0 15px; color: white; display: flex; align-items: center; gap: 10px; }
-        .story-main-img { flex: 1; width: 100%; object-fit: contain; }
-        
-        /* Post Viewer (Overlay para borrar posts) */
-        #post-viewer-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.9); z-index: 2500; display: none; 
-            flex-direction: column; justify-content: center; align-items: center;
+        .chat-nav { 
+            padding: 10px 15px; border-bottom: 1px solid #dbdbdb; display: flex; align-items: center; 
         }
+        .messages-area { flex: 1; padding: 15px; overflow-y: auto; background: white; display: flex; flex-direction: column; gap: 8px;}
+        .msg { max-width: 70%; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 1.4; }
+        .msg-me { align-self: flex-end; background: #efefef; color: black; border-bottom-right-radius: 4px; }
+        .msg-them { align-self: flex-start; background: white; border: 1px solid #dbdbdb; border-bottom-left-radius: 4px; }
+        
+        .input-bar { 
+            padding: 10px; border-top: 1px solid #dbdbdb; display: flex; gap: 10px; align-items: center;
+        }
+        .input-bar input { margin: 0; border-radius: 20px; padding: 10px 15px; }
 
-        /* Botón Borrar */
-        .btn-delete { color: white; margin-left: auto; cursor: pointer; font-size: 18px; padding: 10px; }
+        /* MATCH OVERLAY */
+        .match-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(128, 0, 0, 0.95); z-index: 100;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center; animation: popIn 0.5s ease;
+        }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
+        .match-title { font-family: 'Billabong', cursive; font-size: 4rem; color: white; margin-bottom: 20px; }
+        .match-avatars { display: flex; gap: 20px; margin-bottom: 30px; }
+        .match-avatars img { width: 100px; height: 100px; border-radius: 50%; border: 4px solid white; }
 
-        /* FAB */
-        .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; }
-
-        /* PUBLIC PROFILE OVERLAY (Para ver a otros) */
-        #public-profile-view { z-index: 30; background: white; }
     </style>
 </head>
 <body>
 
-    <div id="story-viewer">
-        <div class="progress-bar"><div class="progress-fill" id="story-progress"></div></div>
-        <div class="story-header">
-            <img id="sv-avatar" src="" style="width:30px;height:30px;border-radius:50%;">
-            <b id="sv-name">Usuario</b>
-            <i id="sv-delete-btn" class="fas fa-trash btn-delete" style="display: none;" onclick="deleteCurrentStory()"></i>
-            <i class="fas fa-times" onclick="closeStory()" style="color:white; font-size:24px; padding:10px; cursor:pointer; margin-left: 10px;"></i>
+    <div id="match-screen" class="match-overlay">
+        <div class="match-title">It's a Match!</div>
+        <div class="match-avatars">
+            <img id="match-my-img" src="" alt="">
+            <img id="match-their-img" src="" alt="">
         </div>
-        <img id="sv-img" class="story-main-img" src="">
+        <p>Ahora podéis chatear y aumentar vuestra racha 🔥</p>
+        <button onclick="closeMatch()" style="margin-top: 30px; padding: 12px 30px; border:none; border-radius: 25px; background: white; color: maroon; font-weight: bold; font-size: 16px; cursor: pointer;">Seguir deslizando</button>
     </div>
-
-    <div id="post-viewer-overlay">
-        <div style="width: 100%; padding: 20px; display: flex; justify-content: flex-end;">
-             <i id="pv-delete-btn" class="fas fa-trash btn-delete" style="display: none; margin-right: 20px;" onclick="deleteCurrentPost()"></i>
-             <i class="fas fa-times" style="color: white; font-size: 24px; cursor: pointer;" onclick="closePostViewer()"></i>
-        </div>
-        <img id="pv-img" src="" style="width: 100%; max-height: 80%; object-fit: contain;">
-    </div>
-
-    <div id="match-alert" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(128,0,0,0.95);z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;">
-        <h1>¡Es un Match!</h1>
-        <button class="btn-primary" style="background:white; color:maroon; width:200px; margin-top:20px;" onclick="document.getElementById('match-alert').style.display='none'">Seguir</button>
-    </div>
-
-    <div id="edit-modal" class="modal">
-        <div class="modal-box">
-            <h3>Editar Perfil</h3>
-            <input type="text" id="edit-name" placeholder="Tu Nombre">
-            <input type="text" id="edit-bio" placeholder="Tu Biografía">
-            <button class="btn-primary" onclick="saveProfile()">Guardar</button>
-            <button class="btn-secondary" onclick="document.getElementById('edit-modal').classList.remove('active')">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="upload-modal" class="modal" onclick="if(event.target===this) this.classList.remove('active')">
-        <div class="modal-box" style="text-align: center;">
-            <h3 style="margin-bottom:15px">Crear Contenido</h3>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('post')"><i class="fas fa-camera"></i> Nuevo Post</button>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('story')"><i class="fas fa-circle-notch"></i> Nueva Historia</button>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('highlight')"><i class="fas fa-star"></i> Nueva Destacada</button>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('profile')"><i class="fas fa-user"></i> Cambiar Foto Perfil</button>
-        </div>
-    </div>
-    
-    <input type="file" id="file-input" hidden accept="image/*" onchange="processFile()">
 
     <div id="app-container">
         
         <div id="auth-view" class="view active">
-            <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 20px;">Meetly</h1>
-            <div id="reg-fields" style="display:none;">
-                <input type="text" id="reg-name" placeholder="Nombre completo">
+            <span class="logo" style="font-family: sans-serif; font-weight: 800; color: var(--match-bg);">Meetly</span>
+            <div id="auth-forms">
+                <input type="text" id="reg-name" placeholder="Nombre completo" style="display:none;">
+                <input type="email" id="email" placeholder="Correo electrónico">
+                <input type="password" id="password" placeholder="Contraseña">
+                <button class="btn-primary" onclick="handleAuth()" id="auth-btn">Iniciar Sesión</button>
+                <div class="auth-switch" onclick="toggleAuth()">¿No tienes cuenta? Regístrate</div>
             </div>
-            <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="password" placeholder="Contraseña">
-            <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Entrar</button>
-            <p style="margin-top: 15px; color: var(--primary); cursor: pointer;" onclick="toggleAuth()">
-                <span id="auth-toggle-text">¿No tienes cuenta? Regístrate</span>
-            </p>
         </div>
 
-        <div id="feed-view" class="view">
-            <div class="stories-bar" id="stories-bar"></div>
-            <div id="feed-container" style="padding-bottom: 80px;"></div>
-        </div>
-
-        <div id="search-view" class="view">
-            <div class="search-header">
-                <div class="search-bar">
-                    <i class="fas fa-search" style="color:#999"></i>
-                    <input type="text" id="search-input" placeholder="Buscar personas..." onkeyup="searchUsers()">
+        <div id="swipe-view" class="view">
+            <div class="app-header">
+                <i class="fas fa-camera" style="color:transparent"></i>
+                <span>Descubrir</span>
+                <i class="fas fa-filter" style="font-size: 18px;"></i>
+            </div>
+            <div class="card-container" id="card-stack">
+                <div style="align-self: center; text-align: center; color: #888;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando personas...
                 </div>
             </div>
-            <div id="search-results">
-                </div>
-        </div>
-
-        <div id="public-profile-view" class="view">
-            <div style="padding:15px; border-bottom:1px solid #eee;">
-                <i class="fas fa-arrow-left" onclick="closePublicProfile()" style="font-size:20px; cursor:pointer;"></i>
-                <span style="font-weight:bold; margin-left:15px;" id="pp-title">Perfil</span>
+            <div class="controls">
+                <button class="control-btn btn-pass" onclick="processSwipe('pass')"><i class="fas fa-times"></i></button>
+                <button class="control-btn btn-match" onclick="processSwipe('like')"><i class="fas fa-heart"></i></button>
             </div>
-            <div class="profile-header">
-                <img src="" id="pp-img" class="profile-pic-lg">
-                <div class="stats">
-                    <div><span class="stat-num" id="pp-posts-count">0</span>Posts</div>
-                    <div><span class="stat-num" id="pp-followers">0</span>Seguidores</div>
-                    <div><span class="stat-num" id="pp-following">0</span>Seguidos</div>
-                </div>
-            </div>
-            <div class="profile-bio-sec">
-                <h3 id="pp-name">Nombre</h3>
-                <div id="pp-bio" style="color:#555; font-size: 14px; margin-bottom:10px;">Bio</div>
-                <button id="btn-follow-action" class="btn-secondary" style="width:100%" onclick="toggleFollow()">Seguir</button>
-            </div>
-            <div class="posts-grid" id="pp-grid"></div>
-        </div>
-
-        <div id="swipe-view" class="view" style="justify-content:center; align-items:center; background:#f5f5f5;">
-            <div id="card-container" style="width:90%; height:60%; position:relative;">
-                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999;">No hay perfiles</div>
-            </div>
-            <div style="margin-top:20px; display:flex; gap:30px;">
-                <button class="btn-secondary" style="width:60px; height:60px; border-radius:50%; color:red; border:2px solid red; font-size:24px;" onclick="handleSwipe('pass')"><i class="fas fa-times"></i></button>
-                <button class="btn-secondary" style="width:60px; height:60px; border-radius:50%; color:green; border:2px solid green; font-size:24px;" onclick="handleSwipe('like')"><i class="fas fa-heart"></i></button>
-            </div>
-        </div>
-
-        <div id="chat-list-view" class="view">
-            <h2 style="padding: 20px;">Mensajes</h2>
-            <div id="matches-list"></div>
         </div>
 
         <div id="profile-view" class="view">
-            <div class="profile-header">
-                <img src="" id="p-img" class="profile-pic-lg">
-                <div class="stats">
-                    <div><span class="stat-num" id="p-posts-count">0</span>Posts</div>
-                    <div><span class="stat-num" id="p-followers">0</span>Seguidores</div>
-                    <div><span class="stat-num" id="p-following">0</span>Seguidos</div>
-                </div>
-            </div>
-            <div class="profile-bio-sec">
-                <h3 id="p-name" style="display:inline-block;">Usuario</h3>
-                <button class="btn-secondary" onclick="openEditProfile()" style="margin-left:5px; padding:4px 8px;">Editar</button>
-                <div id="p-bio" style="color:#555; font-size: 14px; margin-top:5px;"></div>
-                <button class="btn-secondary" onclick="logout()" style="margin-top:10px; font-size:12px;">Cerrar Sesión</button>
+            <div class="app-header">
+                <span id="header-username">mi_usuario</span>
+                <i class="fas fa-cog" onclick="logout()"></i>
             </div>
             
-            <div class="highlights-sec" id="my-highlights">
+            <div class="profile-top">
+                <div class="profile-img-container">
+                    <img src="" id="my-profile-pic" class="profile-img">
                 </div>
-
-            <div style="border-top: 1px solid #eee;">
-                <div class="posts-grid" id="profile-grid"></div>
+                <div class="profile-stats">
+                    <div><span class="stat-val" id="stat-posts">0</span><span class="stat-label">Posts</span></div>
+                    <div><span class="stat-val" id="stat-followers">0</span><span class="stat-label">Seguidores</span></div>
+                    <div><span class="stat-val" id="stat-following">0</span><span class="stat-label">Seguidos</span></div>
+                </div>
             </div>
+
+            <div class="bio-section">
+                <div class="bio-name" id="display-name">Nombre</div>
+                <div id="bio-text">Bienvenido a mi perfil de Meetly.</div>
+            </div>
+
+            <div class="highlights">
+                <div class="highlight-item">
+                    <div class="highlight-circle"><i class="fas fa-heart"></i></div>
+                    <span class="highlight-text">Love</span>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-circle"><i class="fas fa-star"></i></div>
+                    <span class="highlight-text">Yo</span>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-circle"><i class="fas fa-plane"></i></div>
+                    <span class="highlight-text">Viajes</span>
+                </div>
+                <div class="highlight-item">
+                    <div class="highlight-circle"><i class="fas fa-plus" style="color:#ccc"></i></div>
+                    <span class="highlight-text">Nuevo</span>
+                </div>
+            </div>
+
+            <div class="photo-grid" id="my-grid">
+                <div class="add-post-btn" onclick="addRandomPost()">+ Añadir Foto Random</div>
+                </div>
         </div>
 
-        <div id="chat-view" class="view" style="z-index:100;">
-            <div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
-                <i class="fas fa-arrow-left" onclick="document.getElementById('chat-view').classList.remove('active')" style="margin-right:15px; font-size:20px; cursor:pointer;"></i>
-                <b id="chat-title">Chat</b>
+        <div id="chat-list-view" class="view">
+            <div class="app-header">
+                <span>Mensajes</span>
+                <i class="fas fa-edit"></i>
             </div>
-            <div id="msg-container" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
-            <div style="padding:10px; display:flex; border-top:1px solid #eee;">
-                <input type="text" id="msg-input" placeholder="Escribe..." style="flex:1; margin:0; border:none;">
-                <button onclick="sendMsg()" style="border:none; background:none; color:var(--primary); font-weight:bold; padding:0 15px;">ENVIAR</button>
-            </div>
-        </div>
-
-        <div class="fab" onclick="document.getElementById('upload-modal').classList.add('active')" id="fab" style="display:none;">
-            <i class="fas fa-plus"></i>
+            <div id="matches-list">
+                </div>
         </div>
 
         <div class="navbar" id="navbar" style="display:none;">
-            <i class="fas fa-home nav-item active" onclick="navTo('feed-view')"></i>
-            <i class="fas fa-search nav-item" onclick="navTo('search-view')"></i> <i class="fas fa-fire nav-item" onclick="navTo('swipe-view')"></i>
-            <i class="fas fa-comment nav-item" onclick="navTo('chat-list-view')"></i>
-            <i class="fas fa-user nav-item" onclick="navTo('profile-view')"></i>
+            <i class="fas fa-home nav-icon" onclick="nav('swipe-view', this)"></i> <i class="fas fa-search nav-icon"></i>
+            <i class="fas fa-comment-dots nav-icon" onclick="nav('chat-list-view', this)"></i> <i class="fas fa-user nav-icon" onclick="nav('profile-view', this)"></i> </div>
+
+        <div id="conversation-view">
+            <div class="chat-nav">
+                <i class="fas fa-arrow-left" onclick="closeChat()" style="font-size: 20px; padding: 10px; cursor: pointer;"></i>
+                <img id="chat-header-img" src="" style="width: 30px; height: 30px; border-radius: 50%; margin: 0 10px;">
+                <span id="chat-header-name" style="font-weight: bold;">Usuario</span>
+            </div>
+            <div id="msg-container" class="messages-area"></div>
+            <div class="input-bar">
+                <input type="text" id="msg-input" placeholder="Envía un mensaje...">
+                <span style="color: var(--primary); font-weight: bold; cursor: pointer;" onclick="sendMsg()">Enviar</span>
+            </div>
         </div>
 
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-        import { getDatabase, ref, set, push, onValue, get, update, child, remove } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getDatabase, ref, set, push, onValue, get, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCnacFrX45poWxbECXN6F1Dxn1VDbHeDs4",
@@ -310,40 +325,44 @@
         const db = getDatabase(app);
 
         let currentUser = null;
-        let uploadType = '';
-        let potentialMatches = [];
-        let cardIndex = 0;
-        let activeChatId = null;
-        let viewingUserUid = null;
-        
-        // Variables para manejo de eliminación
-        let currentStoryId = null;
-        let currentStoryIsHighlight = false;
-        let currentPostId = null;
+        let cardQueue = [];
+        let currentCardIndex = 0;
+        let activeChatID = null;
 
-        // AUTH
-        let isReg = false;
+        // --- AUTH ---
+        let isRegister = false;
         window.toggleAuth = () => {
-            isReg = !isReg;
-            document.getElementById('reg-fields').style.display = isReg ? 'block' : 'none';
-            document.getElementById('auth-btn').innerText = isReg ? 'Registrarse' : 'Entrar';
-            document.getElementById('auth-toggle-text').innerText = isReg ? '¿Ya tienes cuenta? Entra' : '¿No tienes cuenta? Regístrate';
+            isRegister = !isRegister;
+            document.getElementById('reg-name').style.display = isRegister ? 'block' : 'none';
+            document.getElementById('auth-btn').innerText = isRegister ? 'Registrarse' : 'Entrar';
+            document.querySelector('.auth-switch').innerText = isRegister ? '¿Ya tienes cuenta? Entra' : '¿No tienes cuenta? Regístrate';
         }
 
         window.handleAuth = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
             const name = document.getElementById('reg-name').value;
+
             try {
-                if(isReg) {
-                    if(!name) return alert("Pon tu nombre");
+                if(isRegister) {
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    // Solo creamos usuario básico, SIN posts dummy para evitar interrogantes
-                    await set(ref(db, 'users/' + cred.user.uid), { name, email, bio: "¡Hola Meetly!", photo: "" });
+                    // Crear perfil inicial
+                    const uid = cred.user.uid;
+                    const randomPic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`;
+                    await set(ref(db, 'users/' + uid), {
+                        name: name,
+                        email: email,
+                        photo: randomPic,
+                        bio: "Nuevo en Meetly ✨",
+                        followers: 0,
+                        following: 0
+                    });
+                    // Añadir 3 fotos dummy iniciales
+                    for(let i=0; i<3; i++) push(ref(db, `posts/${uid}`), { img: `https://picsum.photos/400?random=${uid}${i}` });
                 } else {
                     await signInWithEmailAndPassword(auth, email, pass);
                 }
-            } catch(e) { alert(e.message); }
+            } catch(e) { alert("Error: " + e.message); }
         }
 
         window.logout = () => signOut(auth);
@@ -353,493 +372,248 @@
                 currentUser = user;
                 document.getElementById('auth-view').classList.remove('active');
                 document.getElementById('navbar').style.display = 'flex';
-                document.getElementById('fab').style.display = 'flex';
-                navTo('feed-view');
-                initData();
+                // Ir a perfil por defecto para cargar datos
+                nav('swipe-view', document.querySelectorAll('.nav-icon')[0]);
+                loadMyProfile();
+                loadCards();
+                listenMatches();
             } else {
                 currentUser = null;
-                document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
                 document.getElementById('auth-view').classList.add('active');
                 document.getElementById('navbar').style.display = 'none';
-                document.getElementById('fab').style.display = 'none';
+                document.body.style.backgroundColor = "var(--bg-color)"; // Reset color
             }
         });
 
-        function initData() {
-            loadFeed();
-            loadStories();
-            loadProfile();
-            loadMatches();
-        }
-
-        // NAVIGATION
-        window.navTo = (id) => {
-            document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        // --- NAVIGATION ---
+        window.nav = (viewId, iconEl) => {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(viewId).classList.add('active');
             
-            document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-            if(id === 'feed-view') document.querySelectorAll('.nav-item')[0].classList.add('active');
-            if(id === 'search-view') document.querySelectorAll('.nav-item')[1].classList.add('active');
-            if(id === 'swipe-view') {
-                document.querySelectorAll('.nav-item')[2].classList.add('active');
-                loadSwipe();
+            document.querySelectorAll('.nav-icon').forEach(i => i.classList.remove('active'));
+            if(iconEl) iconEl.classList.add('active');
+
+            // Reset background color si no estamos en swipe o match
+            if(document.body.style.backgroundColor !== "var(--match-bg)") {
+                document.body.style.backgroundColor = "var(--bg-color)";
             }
-            if(id === 'chat-list-view') document.querySelectorAll('.nav-item')[3].classList.add('active');
-            if(id === 'profile-view') document.querySelectorAll('.nav-item')[4].classList.add('active');
         }
 
-        // UPLOAD
-        window.triggerUpload = (type) => {
-            uploadType = type;
-            document.getElementById('file-input').click();
-            document.getElementById('upload-modal').classList.remove('active');
-        }
-
-        window.processFile = async () => {
-            const file = document.getElementById('file-input').files[0];
-            if(!file) return;
-            alert("Subiendo...");
-            const base64 = await compressImage(file);
-            
-            if(uploadType === 'post') {
-                const k = push(child(ref(db), 'posts')).key;
-                const p = { uid: currentUser.uid, image: base64, caption: "", timestamp: Date.now() };
-                const u = {};
-                u['/posts/' + k] = p;
-                u['/users/' + currentUser.uid + '/posts/' + k] = p;
-                await update(ref(db), u);
-            } else if (uploadType === 'story') {
-                await push(ref(db, 'stories'), { uid: currentUser.uid, image: base64, timestamp: Date.now() });
-            } else if (uploadType === 'profile') {
-                await update(ref(db, 'users/' + currentUser.uid), { photo: base64 });
-            } else if (uploadType === 'highlight') {
-                await push(ref(db, `users/${currentUser.uid}/highlights`), { image: base64, title: "Destacada" });
-            }
-            document.getElementById('file-input').value = "";
-            alert("¡Listo!");
-        }
-
-        const compressImage = (file) => {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image();
-                    img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas');
-                        const MAX = 600;
-                        const sc = MAX / img.width;
-                        canvas.width = MAX;
-                        canvas.height = img.height * sc;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        resolve(canvas.toDataURL('image/jpeg', 0.7));
-                    }
-                }
+        // --- PROFILE LOGIC ---
+        function loadMyProfile() {
+            onValue(ref(db, 'users/' + currentUser.uid), (snap) => {
+                const data = snap.val();
+                if(!data) return;
+                document.getElementById('header-username').innerText = data.name.toLowerCase().replace(/\s/g, '_');
+                document.getElementById('display-name').innerText = data.name;
+                document.getElementById('my-profile-pic').src = data.photo;
+                document.getElementById('stat-followers').innerText = data.followers;
+                document.getElementById('stat-following').innerText = data.following;
             });
-        }
 
-        // SEARCH
-        window.searchUsers = async () => {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const resDiv = document.getElementById('search-results');
-            resDiv.innerHTML = '';
-            
-            if(query.length < 1) return;
-
-            const snap = await get(ref(db, 'users'));
-            const users = snap.val();
-            
-            if(users) {
-                Object.keys(users).forEach(uid => {
-                    const u = users[uid];
-                    if(uid !== currentUser.uid && u.name.toLowerCase().includes(query)) {
+            // Cargar posts
+            onValue(ref(db, 'posts/' + currentUser.uid), (snap) => {
+                const posts = snap.val();
+                const grid = document.getElementById('my-grid');
+                // Mantener botón de añadir
+                grid.innerHTML = '<div class="add-post-btn" onclick="addRandomPost()">+ Añadir Foto Random</div>';
+                
+                if(posts) {
+                    let count = 0;
+                    Object.values(posts).forEach(p => {
                         const div = document.createElement('div');
-                        div.className = 'user-result';
-                        div.innerHTML = `
-                            <img src="${u.photo || 'https://via.placeholder.com/50'}">
-                            <div><b>${u.name}</b><br><small style="color:#888">Ver perfil</small></div>
-                        `;
-                        div.onclick = () => openPublicProfile(uid);
-                        resDiv.appendChild(div);
-                    }
-                });
-            }
-        }
-
-        // PUBLIC PROFILE & FOLLOW SYSTEM
-        window.openPublicProfile = async (uid) => {
-            viewingUserUid = uid;
-            document.getElementById('public-profile-view').classList.add('active');
-            
-            const snap = await get(ref(db, `users/${uid}`));
-            const u = snap.val();
-            
-            document.getElementById('pp-name').innerText = u.name;
-            document.getElementById('pp-bio').innerText = u.bio || '';
-            document.getElementById('pp-img').src = u.photo || 'https://via.placeholder.com/80';
-            document.getElementById('pp-title').innerText = u.name;
-
-            // Check if following
-            const followSnap = await get(ref(db, `users/${currentUser.uid}/following/${uid}`));
-            const isFollowing = followSnap.exists();
-            updateFollowBtn(isFollowing);
-
-            const followers = u.followers ? Object.keys(u.followers).length : 0;
-            const following = u.following ? Object.keys(u.following).length : 0;
-            document.getElementById('pp-followers').innerText = followers;
-            document.getElementById('pp-following').innerText = following;
-
-            // Load posts (FILTRADOS)
-            const grid = document.getElementById('pp-grid');
-            grid.innerHTML = '';
-            let validPosts = [];
-            
-            if(u.posts) {
-                Object.values(u.posts).forEach(p => {
-                    if(p.image && p.image.startsWith('data:image')) {
-                        validPosts.push(p);
-                    }
-                });
-                
-                document.getElementById('pp-posts-count').innerText = validPosts.length;
-                validPosts.forEach(p => {
-                    const img = document.createElement('img');
-                    img.className = 'grid-img';
-                    img.src = p.image;
-                    grid.appendChild(img);
-                });
-            } else {
-                document.getElementById('pp-posts-count').innerText = 0;
-            }
-        }
-
-        window.closePublicProfile = () => {
-            document.getElementById('public-profile-view').classList.remove('active');
-            viewingUserUid = null;
-        }
-
-        function updateFollowBtn(isFollowing) {
-            const btn = document.getElementById('btn-follow-action');
-            if(isFollowing) {
-                btn.innerText = "Siguiendo";
-                btn.classList.add('btn-secondary');
-                btn.classList.remove('btn-follow');
-            } else {
-                btn.innerText = "Seguir";
-                btn.classList.add('btn-follow');
-                btn.classList.remove('btn-secondary');
-            }
-        }
-
-        window.toggleFollow = async () => {
-            if(!viewingUserUid) return;
-            const myRef = ref(db, `users/${currentUser.uid}/following/${viewingUserUid}`);
-            const theirRef = ref(db, `users/${viewingUserUid}/followers/${currentUser.uid}`);
-            
-            const snap = await get(myRef);
-            if(snap.exists()) {
-                await remove(myRef);
-                await remove(theirRef);
-                updateFollowBtn(false);
-            } else {
-                await set(myRef, true);
-                await set(theirRef, true);
-                updateFollowBtn(true);
-            }
-        }
-
-        // STORIES & HIGHLIGHTS & DELETE
-        function loadStories() {
-            onValue(ref(db, 'stories'), async (snap) => {
-                const bar = document.getElementById('stories-bar');
-                let html = `
-                <div class="story-item" onclick="triggerUpload('story')">
-                    <div class="story-ring add"><i class="fas fa-plus" style="color:var(--primary)"></i></div>
-                    <span class="story-name">Tú</span>
-                </div>`;
-                const data = snap.val();
-                if(data) {
-                    const done = new Set();
-                    // Necesitamos clave para borrar
-                    const storiesArr = [];
-                    Object.keys(data).forEach(key => storiesArr.push({...data[key], id: key}));
-                    
-                    storiesArr.reverse().forEach(async s => {
-                        if(done.has(s.uid)) return;
-                        done.add(s.uid);
-                        const uSnap = await get(ref(db, `users/${s.uid}`));
-                        const u = uSnap.val();
-                        if(u) {
-                            const safeImg = s.image.replace(/'/g, "\\'"); 
-                            const safeName = u.name.replace(/'/g, "\\'");
-                            const isMine = (s.uid === currentUser.uid);
-                            
-                            // Pasamos ID y dueño para boton borrar
-                             html += `
-                            <div class="story-item" onclick="viewStory('${safeImg}','${safeName}', '${s.id}', '${s.uid}', false)">
-                                <div class="story-ring"><img src="${u.photo||''}" class="story-img"></div>
-                                <span class="story-name">${u.name}</span>
-                            </div>`;
-                            bar.innerHTML = html;
-                        }
+                        div.className = 'grid-item';
+                        div.innerHTML = `<img src="${p.img}">`;
+                        grid.appendChild(div);
+                        count++;
                     });
-                }
-                bar.innerHTML = html;
-            });
-        }
-
-        // viewStory actualizado para Delete
-        window.viewStory = (img, name, id, ownerUid, isHighlight) => {
-            document.getElementById('sv-img').src = img;
-            document.getElementById('sv-name').innerText = name;
-            document.getElementById('story-viewer').style.display = 'flex';
-            
-            // Logica borrar
-            currentStoryId = id;
-            currentStoryIsHighlight = isHighlight;
-            const delBtn = document.getElementById('sv-delete-btn');
-            
-            if(ownerUid === currentUser.uid || ownerUid === 'me') {
-                delBtn.style.display = 'block';
-            } else {
-                delBtn.style.display = 'none';
-            }
-
-            document.getElementById('story-progress').style.width = '0%';
-            setTimeout(() => document.getElementById('story-progress').style.width = '100%', 50);
-            // No cerrar automatico si es destacada o si queremos borrar
-        }
-        
-        window.deleteCurrentStory = async () => {
-            if(!confirm("¿Borrar esta historia?")) return;
-            
-            if(currentStoryIsHighlight) {
-                await remove(ref(db, `users/${currentUser.uid}/highlights/${currentStoryId}`));
-            } else {
-                await remove(ref(db, `stories/${currentStoryId}`));
-            }
-            closeStory();
-            loadProfile(); // recargar si era highlight
-        }
-
-        window.closeStory = () => document.getElementById('story-viewer').style.display = 'none';
-
-        // FEED & PROFILE
-        function loadFeed() {
-            onValue(ref(db, 'posts'), async (snap) => {
-                const c = document.getElementById('feed-container');
-                c.innerHTML = '';
-                const data = snap.val();
-                if(!data) { c.innerHTML='<div style="padding:20px;text-align:center;color:#999">No hay posts</div>'; return; }
-                
-                const posts = Object.values(data).sort((a,b)=>b.timestamp-a.timestamp);
-                
-                for(const p of posts) {
-                    // Filtrar interrogantes en feed tambien
-                    if(!p.image || !p.image.startsWith('data:image')) continue;
-
-                    const uSnap = await get(ref(db, `users/${p.uid}`));
-                    const u = uSnap.val();
-                    const d = document.createElement('div');
-                    d.className = 'feed-post';
-                    d.innerHTML = `
-                        <div class="post-header"><img src="${u.photo||''}" class="post-avatar-sm"><span>${u.name}</span></div>
-                        <img src="${p.image}" class="post-image">
-                        <div class="post-actions"><i class="far fa-heart"></i><i class="far fa-comment"></i></div>
-                    `;
-                    c.appendChild(d);
+                    document.getElementById('stat-posts').innerText = count;
                 }
             });
         }
 
-        function loadProfile() {
-            onValue(ref(db, `users/${currentUser.uid}`), (snap) => {
-                const u = snap.val();
-                if(!u) return;
-                document.getElementById('p-name').innerText = u.name;
-                document.getElementById('p-bio').innerText = u.bio;
-                document.getElementById('p-img').src = u.photo || '';
-                
-                document.getElementById('edit-name').value = u.name;
-                document.getElementById('edit-bio').value = u.bio;
-                
-                const f1 = u.followers ? Object.keys(u.followers).length : 0;
-                const f2 = u.following ? Object.keys(u.following).length : 0;
-                document.getElementById('p-followers').innerText = f1;
-                document.getElementById('p-following').innerText = f2;
+        window.addRandomPost = () => {
+            const r = Math.floor(Math.random() * 1000);
+            push(ref(db, `posts/${currentUser.uid}`), {
+                img: `https://picsum.photos/400?random=${r}`
+            });
+        }
 
-                // Highlights
-                const hlDiv = document.getElementById('my-highlights');
-                let hlHtml = `
-                    <div class="highlight-item" onclick="triggerUpload('highlight')">
-                        <div class="hl-circle add">+</div>
-                        <span class="hl-title">Nueva</span>
+        // --- SWIPE LOGIC ---
+        async function loadCards() {
+            const allUsersSnap = await get(ref(db, 'users'));
+            const mySwipesSnap = await get(ref(db, `swipes/${currentUser.uid}`));
+            
+            const allUsers = allUsersSnap.val() || {};
+            const mySwipes = mySwipesSnap.val() || {};
+            
+            cardQueue = [];
+            Object.keys(allUsers).forEach(uid => {
+                if(uid !== currentUser.uid && !mySwipes[uid]) {
+                    cardQueue.push({ uid, ...allUsers[uid] });
+                }
+            });
+            currentCardIndex = 0;
+            renderCurrentCard();
+        }
+
+        function renderCurrentCard() {
+            const container = document.getElementById('card-stack');
+            container.innerHTML = '';
+            
+            if(currentCardIndex >= cardQueue.length) {
+                container.innerHTML = '<div style="align-self:center; text-align:center; color:#666;"><h3>No hay más perfiles</h3><p>Vuelve más tarde</p></div>';
+                return;
+            }
+
+            const user = cardQueue[currentCardIndex];
+            // Intentar sacar una foto de sus posts, si no, avatar
+            get(ref(db, `posts/${user.uid}`)).then(snap => {
+                let displayImg = user.photo;
+                if(snap.val()) {
+                    const posts = Object.values(snap.val());
+                    if(posts.length > 0) displayImg = posts[0].img;
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'tinder-card';
+                card.innerHTML = `
+                    <img src="${displayImg}">
+                    <div class="card-details">
+                        <div class="card-name">${user.name}</div>
+                        <div style="color:#666;">${user.bio}</div>
                     </div>
                 `;
-                if(u.highlights) {
-                    Object.keys(u.highlights).forEach(key => {
-                        const h = u.highlights[key];
-                        const safeImg = h.image.replace(/'/g, "\\'");
-                        // Pasamos true en isHighlight
-                        hlHtml += `
-                        <div class="highlight-item" onclick="viewStory('${safeImg}', 'Destacada', '${key}', 'me', true)">
-                            <div class="hl-circle"><img src="${h.image}" class="hl-img"></div>
-                            <span class="hl-title">${h.title}</span>
-                        </div>`;
-                    });
-                }
-                hlDiv.innerHTML = hlHtml;
-
-                // Posts (CON FILTRO Y BORRADO)
-                const grid = document.getElementById('profile-grid');
-                grid.innerHTML = '';
-                
-                let validPosts = [];
-                if(u.posts) {
-                    Object.keys(u.posts).forEach(key => {
-                        const p = u.posts[key];
-                        // SOLO si tiene imagen real
-                        if(p.image && p.image.startsWith('data:image')) {
-                            validPosts.push({...p, id: key});
-                        }
-                    });
-                }
-
-                document.getElementById('p-posts-count').innerText = validPosts.length;
-                
-                validPosts.forEach(p => {
-                    const i = document.createElement('img');
-                    i.className = 'grid-img';
-                    i.src = p.image;
-                    // Click para ver y borrar
-                    i.onclick = () => openPostViewer(p.image, p.id);
-                    grid.appendChild(i);
-                });
+                container.appendChild(card);
             });
         }
-        
-        // POST VIEWER & DELETE LOGIC
-        window.openPostViewer = (img, id) => {
-            document.getElementById('pv-img').src = img;
-            currentPostId = id;
-            document.getElementById('post-viewer-overlay').style.display = 'flex';
-            document.getElementById('pv-delete-btn').style.display = 'block';
-        }
-        
-        window.closePostViewer = () => {
-             document.getElementById('post-viewer-overlay').style.display = 'none';
-        }
 
-        window.deleteCurrentPost = async () => {
-            if(!confirm("¿Borrar publicación?")) return;
-            // Borrar de global y de user
-            const updates = {};
-            updates[`/posts/${currentPostId}`] = null;
-            updates[`/users/${currentUser.uid}/posts/${currentPostId}`] = null;
+        window.processSwipe = async (type) => { // 'like' or 'pass'
+            if(currentCardIndex >= cardQueue.length) return;
             
-            await update(ref(db), updates);
-            closePostViewer();
-        }
-
-        window.openEditProfile = () => document.getElementById('edit-modal').classList.add('active');
-        window.saveProfile = async () => {
-            const n = document.getElementById('edit-name').value;
-            const b = document.getElementById('edit-bio').value;
-            await update(ref(db, `users/${currentUser.uid}`), { name: n, bio: b });
-            document.getElementById('edit-modal').classList.remove('active');
-        }
-
-        // SWIPE & CHAT
-        async function loadSwipe() {
-            const allSnap = await get(ref(db, 'users'));
-            const all = allSnap.val();
-            const sSnap = await get(ref(db, `swipes/${currentUser.uid}`));
-            const swipes = sSnap.val() || {};
-            potentialMatches = [];
+            const target = cardQueue[currentCardIndex];
             
-            if(all) {
-                Object.keys(all).forEach(k => { 
-                    // Filtramos gente sin foto
-                    const user = all[k];
-                    if(k!==currentUser.uid && !swipes[k] && user.photo) {
-                        potentialMatches.push({uid:k,...user}); 
-                    }
-                });
-            }
-            cardIndex = 0;
-            renderCard();
-        }
-
-        function renderCard() {
-            const c = document.getElementById('card-container');
-            c.innerHTML = '';
-            if(cardIndex < potentialMatches.length) {
-                const u = potentialMatches[cardIndex];
-                const card = document.createElement('div');
-                card.style.cssText = "width:100%;height:100%;background:white;border-radius:15px;overflow:hidden;position:relative;box-shadow:0 10px 20px rgba(0,0,0,0.1);";
-                card.innerHTML = `<img src="${u.photo||''}" style="width:100%;height:100%;object-fit:cover;"><div style="position:absolute;bottom:0;width:100%;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,0.8));color:white;"><h2>${u.name}</h2><p>${u.bio}</p></div>`;
-                c.appendChild(card);
-            } else c.innerHTML = '<div style="color:#999">No hay más perfiles</div>';
-        }
-
-        window.handleSwipe = async (act) => {
-            if(cardIndex>=potentialMatches.length) return;
-            const t = potentialMatches[cardIndex];
-            await set(ref(db, `swipes/${currentUser.uid}/${t.uid}`), act);
-            if(act === 'like') {
-                const check = await get(ref(db, `swipes/${t.uid}/${currentUser.uid}`));
+            // Guardar acción
+            await set(ref(db, `swipes/${currentUser.uid}/${target.uid}`), type);
+            
+            if(type === 'like') {
+                // Check Match
+                const check = await get(ref(db, `swipes/${target.uid}/${currentUser.uid}`));
                 if(check.val() === 'like') {
-                    document.getElementById('match-alert').style.display = 'flex';
-                    await update(ref(db), { [`matches/${currentUser.uid}/${t.uid}`]:{ts:Date.now()}, [`matches/${t.uid}/${currentUser.uid}`]:{ts:Date.now()} });
+                    doMatch(target);
                 }
             }
-            cardIndex++;
-            renderCard();
+
+            currentCardIndex++;
+            renderCurrentCard();
         }
 
-        function loadMatches() {
+        function doMatch(targetUser) {
+            // CAMBIO DE COLOR GLOBAL A GRANATE
+            document.body.style.backgroundColor = "var(--match-bg)";
+            
+            // Mostrar Overlay
+            const overlay = document.getElementById('match-screen');
+            document.getElementById('match-my-img').src = document.getElementById('my-profile-pic').src;
+            document.getElementById('match-their-img').src = targetUser.photo;
+            overlay.style.display = 'flex';
+
+            // Crear registro de match
+            const matchId = [currentUser.uid, targetUser.uid].sort().join('_');
+            const matchData = { timestamp: Date.now(), streak: 0 };
+            
+            update(ref(db), {
+                [`matches/${currentUser.uid}/${targetUser.uid}`]: matchData,
+                [`matches/${targetUser.uid}/${currentUser.uid}`]: matchData
+            });
+        }
+
+        window.closeMatch = () => {
+            document.getElementById('match-screen').style.display = 'none';
+            // Volver al rosa suave después de un momento
+            setTimeout(() => {
+                document.body.style.backgroundColor = "var(--bg-color)";
+            }, 500);
+        }
+
+        // --- CHAT & MATCH LIST ---
+        function listenMatches() {
             onValue(ref(db, `matches/${currentUser.uid}`), async (snap) => {
-                const l = document.getElementById('matches-list');
-                l.innerHTML = '';
-                const d = snap.val();
-                if(d) for(const k of Object.keys(d)) {
-                    const uSnap = await get(ref(db, `users/${k}`));
-                    const u = uSnap.val();
-                    const div = document.createElement('div');
-                    div.style.cssText = "padding:15px;border-bottom:1px solid #eee;display:flex;align-items:center;cursor:pointer;";
-                    div.innerHTML = `<img src="${u.photo||''}" style="width:50px;height:50px;border-radius:50%;margin-right:15px;object-fit:cover;"><b>${u.name}</b>`;
-                    div.onclick = () => openChat(k, u.name);
-                    l.appendChild(div);
+                const list = document.getElementById('matches-list');
+                list.innerHTML = '';
+                const matches = snap.val();
+                
+                if(!matches) {
+                    list.innerHTML = '<p style="padding:20px; text-align:center; color:#999;">Aún no tienes matches. ¡Ve a descubrir!</p>';
+                    return;
+                }
+
+                for(const uid of Object.keys(matches)) {
+                    const userSnap = await get(ref(db, `users/${uid}`));
+                    const uData = userSnap.val();
+                    const streak = matches[uid].streak;
+
+                    const row = document.createElement('div');
+                    row.className = 'chat-row';
+                    row.onclick = () => openChat(uid, uData);
+                    row.innerHTML = `
+                        <img src="${uData.photo}" class="chat-avatar">
+                        <div class="chat-preview">
+                            <div class="chat-name">${uData.name}</div>
+                            <div class="chat-msg">Toca para chatear</div>
+                        </div>
+                        ${streak > 0 ? `<div class="streak-badge">🔥 ${streak}</div>` : ''}
+                    `;
+                    list.appendChild(row);
                 }
             });
         }
 
-        window.openChat = (uid, name) => {
-            activeChatId = [currentUser.uid, uid].sort().join('_');
-            document.getElementById('chat-title').innerText = name;
-            document.getElementById('chat-view').classList.add('active');
-            onValue(ref(db, `messages/${activeChatId}`), (snap) => {
-                const c = document.getElementById('msg-container');
-                c.innerHTML = '';
-                const d = snap.val();
-                if(d) Object.values(d).forEach(m => {
-                    const b = document.createElement('div');
-                    b.style.cssText = `max-width:70%;padding:8px 12px;border-radius:15px;font-size:14px;${m.sender===currentUser.uid?'align-self:flex-end;background:var(--primary);color:white':'align-self:flex-start;background:#eee'}`;
-                    b.innerText = m.text;
-                    c.appendChild(b);
-                });
-                c.scrollTop = c.scrollHeight;
+        window.openChat = (targetUid, targetData) => {
+            activeChatID = [currentUser.uid, targetUid].sort().join('_');
+            
+            document.getElementById('chat-header-name').innerText = targetData.name;
+            document.getElementById('chat-header-img').src = targetData.photo;
+            
+            const view = document.getElementById('conversation-view');
+            view.style.display = 'flex';
+
+            // Cargar mensajes
+            onValue(ref(db, `messages/${activeChatID}`), (snap) => {
+                const container = document.getElementById('msg-container');
+                container.innerHTML = '';
+                const msgs = snap.val();
+                if(msgs) {
+                    Object.values(msgs).forEach(m => {
+                        const div = document.createElement('div');
+                        div.className = `msg ${m.sender === currentUser.uid ? 'msg-me' : 'msg-them'}`;
+                        div.innerText = m.text;
+                        container.appendChild(div);
+                    });
+                    container.scrollTop = container.scrollHeight;
+                }
             });
         }
-        
-        window.sendMsg = () => {
-            const t = document.getElementById('msg-input').value;
-            if(!t) return;
-            push(ref(db, `messages/${activeChatId}`), {sender:currentUser.uid, text:t, timestamp:Date.now()});
-            document.getElementById('msg-input').value = '';
+
+        window.closeChat = () => {
+            document.getElementById('conversation-view').style.display = 'none';
+            activeChatID = null;
         }
+
+        window.sendMsg = () => {
+            const input = document.getElementById('msg-input');
+            const txt = input.value.trim();
+            if(!txt || !activeChatID) return;
+
+            push(ref(db, `messages/${activeChatID}`), {
+                text: txt,
+                sender: currentUser.uid,
+                timestamp: serverTimestamp()
+            });
+            input.value = '';
+        }
+
     </script>
 </body>
 </html>
