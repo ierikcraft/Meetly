@@ -19,147 +19,101 @@
         body {
             background-color: var(--bg-color);
             color: var(--text);
-            transition: background-color 0.5s ease;
             height: 100vh;
             width: 100vw;
             display: flex;
             justify-content: center;
-            overflow: hidden; /* Evita scroll en el body */
+            overflow: hidden;
         }
 
         #app-container {
-            width: 100%;
-            max-width: 450px;
-            background: var(--white);
-            height: 100%;
-            position: relative; /* Clave para posicionar las vistas */
+            width: 100%; max-width: 450px; background: var(--white);
+            height: 100%; position: relative;
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             overflow: hidden;
         }
 
-        /* --- VISTAS (SOLUCIÓN DEL BUG) --- */
+        /* --- VISTAS --- */
         .view { 
-            position: absolute; /* Se superponen exactamente */
-            top: 0; left: 0;
-            width: 100%; 
-            height: 100%; 
-            background: var(--white); /* Fondo sólido para que no se vea lo de atrás */
-            display: none; 
-            flex-direction: column;
-            overflow-y: auto; /* Scroll interno solo aquí */
-            padding-bottom: 70px; /* Espacio para navbar */
-            z-index: 10;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            background: var(--white); display: none; flex-direction: column;
+            overflow-y: auto; padding-bottom: 70px; z-index: 10;
         }
+        .view.active { display: flex; z-index: 20; }
         
-        .view.active { 
-            display: flex; 
-            z-index: 20; /* La activa siempre arriba */
-        }
+        /* --- ESTILOS GENERALES --- */
+        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fafafa; }
+        .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-secondary { background: white; border: 1px solid #ddd; color: #333; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
+        .btn-follow { background: var(--primary); color: white; border: none; }
         
         /* --- AUTH --- */
         #auth-view { justify-content: center; align-items: center; padding: 30px; text-align: center; }
-        input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fafafa; }
-        .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .btn-secondary { background: white; border: 1px solid #ddd; color: #333; margin-top: 5px; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer;}
 
         /* --- FEED & STORIES --- */
-        .stories-bar {
-            padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
-        }
-        .stories-bar::-webkit-scrollbar { display: none; }
-        
+        .stories-bar { padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
         .story-item { display: flex; flex-direction: column; align-items: center; width: 70px; flex-shrink: 0; cursor: pointer; }
-        .story-ring {
-            width: 68px; height: 68px; border-radius: 50%; padding: 3px;
-            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-        }
+        .story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 3px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
         .story-ring.add { background: none; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid white; background: white; }
-        .story-name { font-size: 11px; margin-top: 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .story-name { font-size: 11px; margin-top: 5px; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;}
 
         .feed-post { margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .post-header { padding: 10px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; }
         .post-avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .post-image { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: #f0f0f0; }
         .post-actions { padding: 10px; font-size: 24px; gap: 15px; display: flex; }
-        .post-caption { padding: 0 10px 15px; font-size: 14px; }
+        
+        /* --- SEARCH VIEW --- */
+        #search-view { padding: 0; }
+        .search-header { padding: 15px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; z-index: 5; }
+        .search-bar { background: #eee; border-radius: 10px; padding: 8px 15px; display: flex; align-items: center; }
+        .search-bar input { margin: 0; padding: 5px; border: none; background: transparent; }
+        .user-result { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
+        .user-result:hover { background: #fafafa; }
+        .user-result img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; margin-right: 15px; }
 
         /* --- PROFILE --- */
-        .profile-header { padding: 20px; display: flex; align-items: center; }
+        .profile-header { padding: 20px 20px 10px 20px; display: flex; align-items: center; }
         .profile-pic-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 1px solid #ddd; background: #eee; }
         .stats { display: flex; gap: 10px; text-align: center; flex: 1; justify-content: space-around; }
         .stat-num { font-weight: bold; font-size: 18px; display: block; }
         .stat-label { font-size: 12px; color: #666; }
+        .profile-bio-sec { padding: 0 20px; }
         
-        .profile-bio-sec { padding: 0 20px 20px; }
-        .btn-edit { padding: 5px 10px; border: 1px solid #dbdbdb; background: white; border-radius: 4px; font-weight: 600; font-size: 13px; margin-left: 10px; cursor: pointer; }
+        /* Highlights */
+        .highlights-sec { padding: 15px 10px; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; }
+        .highlight-item { display: flex; flex-direction: column; align-items: center; width: 65px; flex-shrink: 0; cursor: pointer; }
+        .hl-circle { width: 60px; height: 60px; border-radius: 50%; border: 1px solid #ddd; padding: 2px; background: white; }
+        .hl-circle.add { border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 20px; color: #555; }
+        .hl-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #eee; }
+        .hl-title { font-size: 11px; margin-top: 5px; text-align: center; }
 
         .posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 10px; }
         .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; background: #eee; }
 
-        /* --- SWIPE (Fix Layout) --- */
-        #swipe-view { 
-            display: none; /* Controlado por JS */
-            flex-direction: column; 
-            align-items: center; 
-            justify-content: center; 
-            background: #f5f5f5; 
-        }
-        .card-stack { width: 90%; height: 60%; position: relative; margin-top: 20px; }
-        .card { 
-            width: 100%; height: 100%; border-radius: 15px; overflow: hidden; position: absolute; 
-            background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
-        }
-        .card img { width: 100%; height: 100%; object-fit: cover; }
-        .card-grad { position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
-        .card-info { position: absolute; bottom: 20px; left: 20px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); z-index: 2; }
-        
-        .swipe-btns { 
-            margin-top: 20px; display: flex; gap: 30px; padding-bottom: 20px; 
-            z-index: 5; /* Asegura que esten encima */
-        }
-        .s-btn { 
-            width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; 
-            transition: transform 0.2s; background: white;
-        }
-        .s-btn:active { transform: scale(0.9); }
+        /* --- NAVBAR --- */
+        .navbar { position: absolute; bottom: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 500; }
+        .nav-item { font-size: 24px; color: #ccc; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
 
         /* --- OVERLAYS --- */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
         .modal.active { display: flex; }
         .modal-box { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 350px; }
-
-        /* STORY VIEWER */
+        
+        /* Story Viewer */
         #story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; z-index: 2000; display: none; flex-direction: column; }
         .progress-bar { height: 3px; background: rgba(255,255,255,0.3); margin: 10px; border-radius: 2px; overflow: hidden; }
         .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
-        .story-main-img { flex: 1; width: 100%; object-fit: contain; }
         .story-header { padding: 0 15px; color: white; display: flex; align-items: center; gap: 10px; }
-        .close-story { position: absolute; top: 20px; right: 20px; color: white; font-size: 24px; cursor: pointer; z-index: 2001; }
-
-        /* MATCH ALERT */
-        #match-alert { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(128, 0, 0, 0.95); z-index: 3000; display: none; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; }
-        
-        /* NAVBAR */
-        .navbar { position: absolute; bottom: 0; width: 100%; height: 60px; background: white; border-top: 1px solid #eee; display: flex; justify-content: space-around; align-items: center; z-index: 500; }
-        .nav-item { font-size: 24px; color: #ccc; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
+        .story-main-img { flex: 1; width: 100%; object-fit: contain; }
 
         /* FAB */
-        .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; transition: transform 0.2s;}
-        .fab:active { transform: scale(0.9); }
+        .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; }
 
-        /* CHAT LIST */
-        .chat-item { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #eee; cursor: pointer; }
-        
-        /* CHAT MSG */
-        #chat-view { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 600; display: none; flex-direction: column; }
-        .msg-area { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #f9f9f9; }
-        .bubble { max-width: 75%; padding: 8px 12px; border-radius: 15px; font-size: 14px; }
-        .me { align-self: flex-end; background: var(--primary); color: white; }
-        .them { align-self: flex-start; background: white; border: 1px solid #eee; }
-
+        /* PUBLIC PROFILE OVERLAY (Para ver a otros) */
+        #public-profile-view { z-index: 30; background: white; }
     </style>
 </head>
 <body>
@@ -169,15 +123,14 @@
         <div class="story-header">
             <img id="sv-avatar" src="" style="width:30px;height:30px;border-radius:50%;">
             <b id="sv-name">Usuario</b>
+            <i class="fas fa-times" onclick="closeStory()" style="margin-left:auto; font-size:20px; cursor:pointer;"></i>
         </div>
-        <i class="fas fa-times close-story" onclick="closeStory()"></i>
         <img id="sv-img" class="story-main-img" src="">
     </div>
 
-    <div id="match-alert">
+    <div id="match-alert" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(128,0,0,0.95);z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;">
         <h1>¡Es un Match!</h1>
-        <p>El fondo ha cambiado a granate.</p>
-        <button class="btn-primary" style="background: white; color: maroon; width: 200px;" onclick="closeMatchAlert()">Seguir</button>
+        <button class="btn-primary" style="background:white; color:maroon; width:200px; margin-top:20px;" onclick="document.getElementById('match-alert').style.display='none'">Seguir</button>
     </div>
 
     <div id="edit-modal" class="modal">
@@ -185,7 +138,7 @@
             <h3>Editar Perfil</h3>
             <input type="text" id="edit-name" placeholder="Tu Nombre">
             <input type="text" id="edit-bio" placeholder="Tu Biografía">
-            <button class="btn-primary" onclick="saveProfile()">Guardar Cambios</button>
+            <button class="btn-primary" onclick="saveProfile()">Guardar</button>
             <button class="btn-secondary" onclick="document.getElementById('edit-modal').classList.remove('active')">Cancelar</button>
         </div>
     </div>
@@ -193,9 +146,10 @@
     <div id="upload-modal" class="modal" onclick="if(event.target===this) this.classList.remove('active')">
         <div class="modal-box" style="text-align: center;">
             <h3 style="margin-bottom:15px">Crear Contenido</h3>
-            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('post')"><i class="fas fa-camera"></i> Nuevo Post</button>
-            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('story')"><i class="fas fa-circle-notch"></i> Nueva Historia</button>
-            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('profile')"><i class="fas fa-user"></i> Cambiar Foto Perfil</button>
+            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('post')"><i class="fas fa-camera"></i> Nuevo Post</button>
+            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('story')"><i class="fas fa-circle-notch"></i> Nueva Historia</button>
+            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('highlight')"><i class="fas fa-star"></i> Nueva Destacada</button>
+            <button class="btn-secondary" style="width:100%; margin-bottom:10px;" onclick="triggerUpload('profile')"><i class="fas fa-user"></i> Cambiar Foto Perfil</button>
         </div>
     </div>
     
@@ -217,65 +171,90 @@
         </div>
 
         <div id="feed-view" class="view">
-            <div class="stories-bar" id="stories-bar">
+            <div class="stories-bar" id="stories-bar"></div>
+            <div id="feed-container" style="padding-bottom: 80px;"></div>
+        </div>
+
+        <div id="search-view" class="view">
+            <div class="search-header">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color:#999"></i>
+                    <input type="text" id="search-input" placeholder="Buscar personas..." onkeyup="searchUsers()">
                 </div>
-            <div id="feed-container" style="padding-bottom: 80px;">
+            </div>
+            <div id="search-results">
                 </div>
         </div>
 
-        <div id="swipe-view" class="view">
-            <div id="card-container" class="card-stack">
-                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column;">
-                    <i class="fas fa-search" style="font-size:40px; margin-bottom:10px; opacity:0.3"></i>
-                    <span>No hay perfiles nuevos</span>
+        <div id="public-profile-view" class="view">
+            <div style="padding:15px; border-bottom:1px solid #eee;">
+                <i class="fas fa-arrow-left" onclick="closePublicProfile()" style="font-size:20px; cursor:pointer;"></i>
+                <span style="font-weight:bold; margin-left:15px;" id="pp-title">Perfil</span>
+            </div>
+            <div class="profile-header">
+                <img src="" id="pp-img" class="profile-pic-lg">
+                <div class="stats">
+                    <div><span class="stat-num" id="pp-posts-count">0</span>Posts</div>
+                    <div><span class="stat-num" id="pp-followers">0</span>Seguidores</div>
+                    <div><span class="stat-num" id="pp-following">0</span>Seguidos</div>
                 </div>
             </div>
-            <div class="swipe-btns">
-                <button class="s-btn" style="color: #ff4b4b; border: 2px solid #ff4b4b;" onclick="handleSwipe('pass')"><i class="fas fa-times"></i></button>
-                <button class="s-btn" style="color: #4bffb5; border: 2px solid #4bffb5;" onclick="handleSwipe('like')"><i class="fas fa-heart"></i></button>
+            <div class="profile-bio-sec">
+                <h3 id="pp-name">Nombre</h3>
+                <div id="pp-bio" style="color:#555; font-size: 14px; margin-bottom:10px;">Bio</div>
+                <button id="btn-follow-action" class="btn-secondary" style="width:100%" onclick="toggleFollow()">Seguir</button>
+            </div>
+            <div class="posts-grid" id="pp-grid"></div>
+        </div>
+
+        <div id="swipe-view" class="view" style="justify-content:center; align-items:center; background:#f5f5f5;">
+            <div id="card-container" style="width:90%; height:60%; position:relative;">
+                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999;">No hay perfiles</div>
+            </div>
+            <div style="margin-top:20px; display:flex; gap:30px;">
+                <button class="btn-secondary" style="width:60px; height:60px; border-radius:50%; color:red; border:2px solid red; font-size:24px;" onclick="handleSwipe('pass')"><i class="fas fa-times"></i></button>
+                <button class="btn-secondary" style="width:60px; height:60px; border-radius:50%; color:green; border:2px solid green; font-size:24px;" onclick="handleSwipe('like')"><i class="fas fa-heart"></i></button>
             </div>
         </div>
 
         <div id="chat-list-view" class="view">
             <h2 style="padding: 20px;">Mensajes</h2>
-            <div id="matches-list">
-                </div>
+            <div id="matches-list"></div>
         </div>
 
         <div id="profile-view" class="view">
             <div class="profile-header">
                 <img src="" id="p-img" class="profile-pic-lg">
                 <div class="stats">
-                    <div><span class="stat-num" id="p-posts-count">0</span><span class="stat-label">Posts</span></div>
-                    <div><span class="stat-num">0</span><span class="stat-label">Seguidores</span></div>
-                    <div><span class="stat-num">0</span><span class="stat-label">Seguidos</span></div>
+                    <div><span class="stat-num" id="p-posts-count">0</span>Posts</div>
+                    <div><span class="stat-num" id="p-followers">0</span>Seguidores</div>
+                    <div><span class="stat-num" id="p-following">0</span>Seguidos</div>
                 </div>
             </div>
             <div class="profile-bio-sec">
-                <div style="display:flex; align-items:center; margin-bottom:5px;">
-                    <h3 id="p-name" style="margin-right: 5px;">Usuario</h3>
-                    <button class="btn-edit" onclick="openEditProfile()">Editar</button>
-                </div>
-                <div id="p-bio" style="color:#555; font-size: 14px;"></div>
-                <button class="btn-secondary" onclick="logout()" style="margin-top:15px; font-size: 12px; padding: 5px 10px; width:auto;">Cerrar Sesión</button>
+                <h3 id="p-name" style="display:inline-block;">Usuario</h3>
+                <button class="btn-secondary" onclick="openEditProfile()" style="margin-left:5px; padding:4px 8px;">Editar</button>
+                <div id="p-bio" style="color:#555; font-size: 14px; margin-top:5px;"></div>
+                <button class="btn-secondary" onclick="logout()" style="margin-top:10px; font-size:12px;">Cerrar Sesión</button>
             </div>
             
-            <div style="border-top: 1px solid #eee; margin-top: 10px;">
-                <div style="text-align: center; padding: 10px; color: #999; font-size: 12px;"><i class="fas fa-th"></i> PUBLICACIONES</div>
-                <div class="posts-grid" id="profile-grid">
-                    </div>
+            <div class="highlights-sec" id="my-highlights">
+                </div>
+
+            <div style="border-top: 1px solid #eee;">
+                <div class="posts-grid" id="profile-grid"></div>
             </div>
         </div>
 
-        <div id="chat-view">
+        <div id="chat-view" class="view" style="z-index:100;">
             <div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
-                <i class="fas fa-arrow-left" onclick="document.getElementById('chat-view').style.display='none'" style="margin-right:15px; font-size:20px; cursor:pointer;"></i>
+                <i class="fas fa-arrow-left" onclick="document.getElementById('chat-view').classList.remove('active')" style="margin-right:15px; font-size:20px; cursor:pointer;"></i>
                 <b id="chat-title">Chat</b>
             </div>
-            <div id="msg-container" class="msg-area"></div>
+            <div id="msg-container" style="flex:1; padding:15px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"></div>
             <div style="padding:10px; display:flex; border-top:1px solid #eee;">
-                <input type="text" id="msg-input" placeholder="Escribe..." style="flex:1; margin:0; border:none; padding:10px;">
-                <button onclick="sendMsg()" style="border:none; background:none; color:var(--primary); font-weight:bold; padding:0 15px; cursor:pointer;">ENVIAR</button>
+                <input type="text" id="msg-input" placeholder="Escribe..." style="flex:1; margin:0; border:none;">
+                <button onclick="sendMsg()" style="border:none; background:none; color:var(--primary); font-weight:bold; padding:0 15px;">ENVIAR</button>
             </div>
         </div>
 
@@ -285,7 +264,7 @@
 
         <div class="navbar" id="navbar" style="display:none;">
             <i class="fas fa-home nav-item active" onclick="navTo('feed-view')"></i>
-            <i class="fas fa-fire nav-item" onclick="navTo('swipe-view')"></i>
+            <i class="fas fa-search nav-item" onclick="navTo('search-view')"></i> <i class="fas fa-fire nav-item" onclick="navTo('swipe-view')"></i>
             <i class="fas fa-comment nav-item" onclick="navTo('chat-list-view')"></i>
             <i class="fas fa-user nav-item" onclick="navTo('profile-view')"></i>
         </div>
@@ -295,7 +274,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-auth.js";
-        import { getDatabase, ref, set, push, onValue, get, update, child } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
+        import { getDatabase, ref, set, push, onValue, get, update, child, remove } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCnacFrX45poWxbECXN6F1Dxn1VDbHeDs4",
@@ -316,7 +295,7 @@
         let potentialMatches = [];
         let cardIndex = 0;
         let activeChatId = null;
-        let storyTimer = null;
+        let viewingUserUid = null; // Para ver perfil de otro
 
         // AUTH
         let isReg = false;
@@ -354,7 +333,8 @@
                 initData();
             } else {
                 currentUser = null;
-                showView('auth-view');
+                document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
+                document.getElementById('auth-view').classList.add('active');
                 document.getElementById('navbar').style.display = 'none';
                 document.getElementById('fab').style.display = 'none';
             }
@@ -369,28 +349,21 @@
 
         // NAVIGATION
         window.navTo = (id) => {
-            // Reset color body
-            document.body.style.backgroundColor = "var(--bg-color)";
-            
-            // Ocultar todos, mostrar solo el activo
             document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             
-            // Iconos navbar
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
-            
             if(id === 'feed-view') document.querySelectorAll('.nav-item')[0].classList.add('active');
+            if(id === 'search-view') document.querySelectorAll('.nav-item')[1].classList.add('active');
             if(id === 'swipe-view') {
-                document.querySelectorAll('.nav-item')[1].classList.add('active');
+                document.querySelectorAll('.nav-item')[2].classList.add('active');
                 loadSwipe();
             }
-            if(id === 'chat-list-view') document.querySelectorAll('.nav-item')[2].classList.add('active');
-            if(id === 'profile-view') document.querySelectorAll('.nav-item')[3].classList.add('active');
+            if(id === 'chat-list-view') document.querySelectorAll('.nav-item')[3].classList.add('active');
+            if(id === 'profile-view') document.querySelectorAll('.nav-item')[4].classList.add('active');
         }
-        
-        window.showView = (id) => navTo(id);
 
-        // UPLOAD & COMPRESS
+        // UPLOAD
         window.triggerUpload = (type) => {
             uploadType = type;
             document.getElementById('file-input').click();
@@ -414,7 +387,8 @@
                 await push(ref(db, 'stories'), { uid: currentUser.uid, image: base64, timestamp: Date.now() });
             } else if (uploadType === 'profile') {
                 await update(ref(db, 'users/' + currentUser.uid), { photo: base64 });
-                loadProfile();
+            } else if (uploadType === 'highlight') {
+                await push(ref(db, `users/${currentUser.uid}/highlights`), { image: base64, title: "Destacada" });
             }
             document.getElementById('file-input').value = "";
             alert("¡Listo!");
@@ -441,168 +415,245 @@
             });
         }
 
-        // STORIES
+        // SEARCH
+        window.searchUsers = async () => {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const resDiv = document.getElementById('search-results');
+            resDiv.innerHTML = '';
+            
+            if(query.length < 1) return;
+
+            const snap = await get(ref(db, 'users'));
+            const users = snap.val();
+            
+            if(users) {
+                Object.keys(users).forEach(uid => {
+                    const u = users[uid];
+                    if(uid !== currentUser.uid && u.name.toLowerCase().includes(query)) {
+                        const div = document.createElement('div');
+                        div.className = 'user-result';
+                        div.innerHTML = `
+                            <img src="${u.photo || 'https://via.placeholder.com/50'}">
+                            <div><b>${u.name}</b><br><small style="color:#888">Ver perfil</small></div>
+                        `;
+                        div.onclick = () => openPublicProfile(uid);
+                        resDiv.appendChild(div);
+                    }
+                });
+            }
+        }
+
+        // PUBLIC PROFILE & FOLLOW SYSTEM
+        window.openPublicProfile = async (uid) => {
+            viewingUserUid = uid;
+            document.getElementById('public-profile-view').classList.add('active');
+            
+            const snap = await get(ref(db, `users/${uid}`));
+            const u = snap.val();
+            
+            document.getElementById('pp-name').innerText = u.name;
+            document.getElementById('pp-bio').innerText = u.bio || '';
+            document.getElementById('pp-img').src = u.photo || 'https://via.placeholder.com/80';
+            document.getElementById('pp-title').innerText = u.name;
+
+            // Check if following
+            const followSnap = await get(ref(db, `users/${currentUser.uid}/following/${uid}`));
+            const isFollowing = followSnap.exists();
+            updateFollowBtn(isFollowing);
+
+            // Load counts (simple calculation)
+            const followers = u.followers ? Object.keys(u.followers).length : 0;
+            const following = u.following ? Object.keys(u.following).length : 0;
+            document.getElementById('pp-followers').innerText = followers;
+            document.getElementById('pp-following').innerText = following;
+
+            // Load posts
+            const grid = document.getElementById('pp-grid');
+            grid.innerHTML = '';
+            if(u.posts) {
+                document.getElementById('pp-posts-count').innerText = Object.keys(u.posts).length;
+                Object.values(u.posts).forEach(p => {
+                    const img = document.createElement('img');
+                    img.className = 'grid-img';
+                    img.src = p.image;
+                    grid.appendChild(img);
+                });
+            } else {
+                document.getElementById('pp-posts-count').innerText = 0;
+            }
+        }
+
+        window.closePublicProfile = () => {
+            document.getElementById('public-profile-view').classList.remove('active');
+            viewingUserUid = null;
+        }
+
+        function updateFollowBtn(isFollowing) {
+            const btn = document.getElementById('btn-follow-action');
+            if(isFollowing) {
+                btn.innerText = "Siguiendo";
+                btn.classList.add('btn-secondary');
+                btn.classList.remove('btn-follow');
+            } else {
+                btn.innerText = "Seguir";
+                btn.classList.add('btn-follow');
+                btn.classList.remove('btn-secondary');
+            }
+        }
+
+        window.toggleFollow = async () => {
+            if(!viewingUserUid) return;
+            const myRef = ref(db, `users/${currentUser.uid}/following/${viewingUserUid}`);
+            const theirRef = ref(db, `users/${viewingUserUid}/followers/${currentUser.uid}`);
+            
+            const snap = await get(myRef);
+            if(snap.exists()) {
+                // Unfollow
+                await remove(myRef);
+                await remove(theirRef);
+                updateFollowBtn(false);
+            } else {
+                // Follow
+                await set(myRef, true);
+                await set(theirRef, true);
+                updateFollowBtn(true);
+            }
+        }
+
+        // STORIES & HIGHLIGHTS
         function loadStories() {
             onValue(ref(db, 'stories'), async (snap) => {
                 const bar = document.getElementById('stories-bar');
-                // Boton añadir siempre primero
                 let html = `
                 <div class="story-item" onclick="triggerUpload('story')">
                     <div class="story-ring add"><i class="fas fa-plus" style="color:var(--primary)"></i></div>
                     <span class="story-name">Tú</span>
                 </div>`;
-                
                 const data = snap.val();
                 if(data) {
-                    const usersDone = new Set();
-                    const stories = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
-                    
-                    for(const s of stories) {
-                        if(usersDone.has(s.uid)) continue;
-                        usersDone.add(s.uid);
-                        
-                        const uSnap = await get(ref(db, 'users/' + s.uid));
+                    const done = new Set();
+                    Object.values(data).reverse().forEach(async s => {
+                        if(done.has(s.uid)) return;
+                        done.add(s.uid);
+                        const uSnap = await get(ref(db, `users/${s.uid}`));
                         const u = uSnap.val();
-                        if(!u) continue;
-                        
-                        // Escapar comillas para el onclick
-                        const safeName = u.name.replace(/'/g, "\\'");
-                        const safeImg = s.image.replace(/'/g, "\\'");
-                        const safeAvatar = (u.photo || '').replace(/'/g, "\\'");
-
-                        html += `
-                        <div class="story-item" onclick="viewStory('${safeImg}', '${safeName}', '${safeAvatar}')">
-                            <div class="story-ring">
-                                <img src="${u.photo || 'https://via.placeholder.com/50'}" class="story-img">
-                            </div>
-                            <span class="story-name">${u.name}</span>
-                        </div>`;
-                    }
+                        if(u) {
+                            const safeImg = s.image.replace(/'/g, "\\'"); 
+                            const safeName = u.name.replace(/'/g, "\\'");
+                             html += `
+                            <div class="story-item" onclick="viewStory('${safeImg}','${safeName}')">
+                                <div class="story-ring"><img src="${u.photo||''}" class="story-img"></div>
+                                <span class="story-name">${u.name}</span>
+                            </div>`;
+                            bar.innerHTML = html;
+                        }
+                    });
                 }
                 bar.innerHTML = html;
             });
         }
 
-        window.viewStory = (img, name, avatar) => {
-            const v = document.getElementById('story-viewer');
+        window.viewStory = (img, name) => {
             document.getElementById('sv-img').src = img;
             document.getElementById('sv-name').innerText = name;
-            document.getElementById('sv-avatar').src = avatar || 'https://via.placeholder.com/50';
-            v.style.display = 'flex';
-            
-            // Animacion barra
-            const bar = document.getElementById('story-progress');
-            bar.style.width = '0%';
-            setTimeout(() => bar.style.width = '100%', 50);
-            
-            clearTimeout(storyTimer);
-            storyTimer = setTimeout(() => { closeStory() }, 5000); // 5 segs
+            document.getElementById('story-viewer').style.display = 'flex';
+            document.getElementById('story-progress').style.width = '0%';
+            setTimeout(() => document.getElementById('story-progress').style.width = '100%', 50);
+            setTimeout(closeStory, 5000);
         }
+        window.closeStory = () => document.getElementById('story-viewer').style.display = 'none';
 
-        window.closeStory = () => {
-            document.getElementById('story-viewer').style.display = 'none';
-            clearTimeout(storyTimer);
-        }
-
-        // FEED
+        // FEED & PROFILE
         function loadFeed() {
             onValue(ref(db, 'posts'), async (snap) => {
-                const cont = document.getElementById('feed-container');
-                cont.innerHTML = '';
+                const c = document.getElementById('feed-container');
+                c.innerHTML = '';
                 const data = snap.val();
-                if(!data) { cont.innerHTML='<div style="padding:20px;text-align:center;color:#999">No hay posts</div>'; return; }
-                
-                const posts = Object.values(data).sort((a,b) => b.timestamp - a.timestamp);
+                if(!data) { c.innerHTML='<div style="padding:20px;text-align:center;color:#999">No hay posts</div>'; return; }
+                const posts = Object.values(data).sort((a,b)=>b.timestamp-a.timestamp);
                 for(const p of posts) {
-                    const uSnap = await get(ref(db, 'users/' + p.uid));
-                    const u = uSnap.val() || {name:'User', photo:''};
-                    
+                    const uSnap = await get(ref(db, `users/${p.uid}`));
+                    const u = uSnap.val();
                     const d = document.createElement('div');
                     d.className = 'feed-post';
                     d.innerHTML = `
-                        <div class="post-header">
-                            <img src="${u.photo || 'https://via.placeholder.com/30'}" class="post-avatar-sm">
-                            <span>${u.name}</span>
-                        </div>
+                        <div class="post-header"><img src="${u.photo||''}" class="post-avatar-sm"><span>${u.name}</span></div>
                         <img src="${p.image}" class="post-image">
-                        <div class="post-actions">
-                            <i class="far fa-heart" style="cursor:pointer"></i>
-                            <i class="far fa-comment" style="cursor:pointer"></i>
-                        </div>
-                        <div class="post-caption"><b>${u.name}</b> ${p.caption}</div>
+                        <div class="post-actions"><i class="far fa-heart"></i><i class="far fa-comment"></i></div>
                     `;
-                    cont.appendChild(d);
+                    c.appendChild(d);
                 }
             });
         }
 
-        // PROFILE FIX
         function loadProfile() {
-            const uRef = ref(db, 'users/' + currentUser.uid);
-            onValue(uRef, (snap) => {
+            onValue(ref(db, `users/${currentUser.uid}`), (snap) => {
                 const u = snap.val();
                 if(!u) return;
-                
                 document.getElementById('p-name').innerText = u.name;
-                document.getElementById('p-bio').innerText = u.bio || '';
-                document.getElementById('p-img').src = u.photo || 'https://via.placeholder.com/150';
+                document.getElementById('p-bio').innerText = u.bio;
+                document.getElementById('p-img').src = u.photo || '';
                 
-                // Editar Modal Values
                 document.getElementById('edit-name').value = u.name;
-                document.getElementById('edit-bio').value = u.bio || '';
-
-                const grid = document.getElementById('profile-grid');
-                grid.innerHTML = ''; // LIMPIAR SIEMPRE
+                document.getElementById('edit-bio').value = u.bio;
                 
-                if(u.posts) {
-                    const posts = Object.values(u.posts);
-                    document.getElementById('p-posts-count').innerText = posts.length;
-                    
-                    posts.forEach(p => {
-                        // Solo renderizar si tiene imagen valida
-                        if(p.image) {
-                            const img = document.createElement('img');
-                            img.className = 'grid-img';
-                            img.src = p.image;
-                            grid.appendChild(img);
-                        }
+                // Followers/Following
+                const f1 = u.followers ? Object.keys(u.followers).length : 0;
+                const f2 = u.following ? Object.keys(u.following).length : 0;
+                document.getElementById('p-followers').innerText = f1;
+                document.getElementById('p-following').innerText = f2;
+
+                // Highlights
+                const hlDiv = document.getElementById('my-highlights');
+                let hlHtml = `
+                    <div class="highlight-item" onclick="triggerUpload('highlight')">
+                        <div class="hl-circle add">+</div>
+                        <span class="hl-title">Nueva</span>
+                    </div>
+                `;
+                if(u.highlights) {
+                    Object.values(u.highlights).forEach(h => {
+                         const safeImg = h.image.replace(/'/g, "\\'");
+                        hlHtml += `
+                        <div class="highlight-item" onclick="viewStory('${safeImg}', 'Destacada')">
+                            <div class="hl-circle"><img src="${h.image}" class="hl-img"></div>
+                            <span class="hl-title">${h.title}</span>
+                        </div>`;
                     });
-                } else {
-                    document.getElementById('p-posts-count').innerText = "0";
-                    grid.innerHTML = '<div style="grid-column:1/4; padding:20px; text-align:center; color:#999">Sin fotos</div>';
+                }
+                hlDiv.innerHTML = hlHtml;
+
+                // Posts
+                const grid = document.getElementById('profile-grid');
+                grid.innerHTML = '';
+                if(u.posts) {
+                    document.getElementById('p-posts-count').innerText = Object.keys(u.posts).length;
+                    Object.values(u.posts).forEach(p => {
+                        const i = document.createElement('img');
+                        i.className = 'grid-img';
+                        i.src = p.image;
+                        grid.appendChild(i);
+                    });
                 }
             });
         }
 
-        // EDIT PROFILE
-        window.openEditProfile = () => {
-            document.getElementById('edit-modal').classList.add('active');
-        }
-
+        window.openEditProfile = () => document.getElementById('edit-modal').classList.add('active');
         window.saveProfile = async () => {
-            const name = document.getElementById('edit-name').value;
-            const bio = document.getElementById('edit-bio').value;
-            if(name) {
-                await update(ref(db, 'users/' + currentUser.uid), { name, bio });
-                document.getElementById('edit-modal').classList.remove('active');
-            }
+            const n = document.getElementById('edit-name').value;
+            const b = document.getElementById('edit-bio').value;
+            await update(ref(db, `users/${currentUser.uid}`), { name: n, bio: b });
+            document.getElementById('edit-modal').classList.remove('active');
         }
 
-        // SWIPE & MATCH
+        // SWIPE & CHAT
         async function loadSwipe() {
             const allSnap = await get(ref(db, 'users'));
             const all = allSnap.val();
-            const swipeSnap = await get(ref(db, `swipes/${currentUser.uid}`));
-            const mySwipes = swipeSnap.val() || {};
-            
+            const sSnap = await get(ref(db, `swipes/${currentUser.uid}`));
+            const swipes = sSnap.val() || {};
             potentialMatches = [];
-            if(all) {
-                Object.keys(all).forEach(k => {
-                    if(k !== currentUser.uid && !mySwipes[k]) {
-                        potentialMatches.push({uid: k, ...all[k]});
-                    }
-                });
-            }
+            if(all) Object.keys(all).forEach(k => { if(k!==currentUser.uid && !swipes[k]) potentialMatches.push({uid:k,...all[k]}); });
             cardIndex = 0;
             renderCard();
         }
@@ -613,71 +664,40 @@
             if(cardIndex < potentialMatches.length) {
                 const u = potentialMatches[cardIndex];
                 const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="${u.photo || 'https://via.placeholder.com/400'}">
-                    <div class="card-grad"></div>
-                    <div class="card-info">
-                        <h2>${u.name}</h2>
-                        <p>${u.bio}</p>
-                    </div>
-                `;
+                card.style.cssText = "width:100%;height:100%;background:white;border-radius:15px;overflow:hidden;position:relative;box-shadow:0 10px 20px rgba(0,0,0,0.1);";
+                card.innerHTML = `<img src="${u.photo||''}" style="width:100%;height:100%;object-fit:cover;"><div style="position:absolute;bottom:0;width:100%;padding:20px;background:linear-gradient(transparent,rgba(0,0,0,0.8));color:white;"><h2>${u.name}</h2><p>${u.bio}</p></div>`;
                 c.appendChild(card);
-            } else {
-                c.innerHTML = `
-                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column;">
-                    <i class="fas fa-search" style="font-size:40px; margin-bottom:10px; opacity:0.3"></i>
-                    <span>No hay perfiles nuevos</span>
-                </div>`;
-            }
+            } else c.innerHTML = '<div style="color:#999">No hay más perfiles</div>';
         }
 
         window.handleSwipe = async (act) => {
-            if(cardIndex >= potentialMatches.length) return;
-            const target = potentialMatches[cardIndex];
-            await set(ref(db, `swipes/${currentUser.uid}/${target.uid}`), act);
-            
+            if(cardIndex>=potentialMatches.length) return;
+            const t = potentialMatches[cardIndex];
+            await set(ref(db, `swipes/${currentUser.uid}/${t.uid}`), act);
             if(act === 'like') {
-                const check = await get(ref(db, `swipes/${target.uid}/${currentUser.uid}`));
+                const check = await get(ref(db, `swipes/${t.uid}/${currentUser.uid}`));
                 if(check.val() === 'like') {
-                    // Match visual
-                    document.body.style.backgroundColor = "var(--match-bg)";
                     document.getElementById('match-alert').style.display = 'flex';
-                    // Match data
-                    const m = { timestamp: Date.now() };
-                    const u = {};
-                    u[`matches/${currentUser.uid}/${target.uid}`] = m;
-                    u[`matches/${target.uid}/${currentUser.uid}`] = m;
-                    await update(ref(db), u);
+                    await update(ref(db), { [`matches/${currentUser.uid}/${t.uid}`]:{ts:Date.now()}, [`matches/${t.uid}/${currentUser.uid}`]:{ts:Date.now()} });
                 }
             }
             cardIndex++;
             renderCard();
         }
 
-        window.closeMatchAlert = () => {
-            document.getElementById('match-alert').style.display = 'none';
-        }
-
-        // CHAT
         function loadMatches() {
             onValue(ref(db, `matches/${currentUser.uid}`), async (snap) => {
-                const list = document.getElementById('matches-list');
-                list.innerHTML = '';
-                const data = snap.val();
-                if(!data) { list.innerHTML="<div style='padding:20px; text-align:center; color:#999'>Sin matches</div>"; return; }
-                
-                for(const uid of Object.keys(data)) {
-                    const uSnap = await get(ref(db, `users/${uid}`));
+                const l = document.getElementById('matches-list');
+                l.innerHTML = '';
+                const d = snap.val();
+                if(d) for(const k of Object.keys(d)) {
+                    const uSnap = await get(ref(db, `users/${k}`));
                     const u = uSnap.val();
-                    const d = document.createElement('div');
-                    d.className = 'chat-item';
-                    d.innerHTML = `
-                        <img src="${u.photo||'https://via.placeholder.com/40'}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-right:15px;background:#eee">
-                        <div><b>${u.name}</b></div>
-                    `;
-                    d.onclick = () => openChat(uid, u.name);
-                    list.appendChild(d);
+                    const div = document.createElement('div');
+                    div.style.cssText = "padding:15px;border-bottom:1px solid #eee;display:flex;align-items:center;cursor:pointer;";
+                    div.innerHTML = `<img src="${u.photo||''}" style="width:50px;height:50px;border-radius:50%;margin-right:15px;object-fit:cover;"><b>${u.name}</b>`;
+                    div.onclick = () => openChat(k, u.name);
+                    l.appendChild(div);
                 }
             });
         }
@@ -685,31 +705,27 @@
         window.openChat = (uid, name) => {
             activeChatId = [currentUser.uid, uid].sort().join('_');
             document.getElementById('chat-title').innerText = name;
-            document.getElementById('chat-view').style.display = 'flex';
-            
+            document.getElementById('chat-view').classList.add('active');
             onValue(ref(db, `messages/${activeChatId}`), (snap) => {
                 const c = document.getElementById('msg-container');
                 c.innerHTML = '';
                 const d = snap.val();
-                if(d) {
-                    Object.values(d).forEach(m => {
-                        const b = document.createElement('div');
-                        b.className = `bubble ${m.sender === currentUser.uid ? 'me':'them'}`;
-                        b.innerText = m.text;
-                        c.appendChild(b);
-                    });
-                    c.scrollTop = c.scrollHeight;
-                }
+                if(d) Object.values(d).forEach(m => {
+                    const b = document.createElement('div');
+                    b.style.cssText = `max-width:70%;padding:8px 12px;border-radius:15px;font-size:14px;${m.sender===currentUser.uid?'align-self:flex-end;background:var(--primary);color:white':'align-self:flex-start;background:#eee'}`;
+                    b.innerText = m.text;
+                    c.appendChild(b);
+                });
+                c.scrollTop = c.scrollHeight;
             });
         }
-
+        
         window.sendMsg = () => {
             const t = document.getElementById('msg-input').value;
-            if(!t || !activeChatId) return;
-            push(ref(db, `messages/${activeChatId}`), { sender: currentUser.uid, text: t, timestamp: Date.now() });
+            if(!t) return;
+            push(ref(db, `messages/${activeChatId}`), {sender:currentUser.uid, text:t, timestamp:Date.now()});
             document.getElementById('msg-input').value = '';
         }
-
     </script>
 </body>
 </html>
