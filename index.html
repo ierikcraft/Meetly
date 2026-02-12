@@ -1,619 +1,79 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Meetly - Social & Match</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --bg-color: #ffd1dc; /* Rosa Pastel */
-            --match-bg: #800000; /* Granate */
-            --primary: #ff5e78;
-            --white: #ffffff;
-            --text: #262626;
-            --gray: #fafafa;
-            --border: #dbdbdb;
-        }
+<style>
+  /* Esto asegura que el bloqueo cubra todo y esté siempre encima */
+  #overlay-migracion-total {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.95); /* Fondo casi negro para tapar todo */
+    z-index: 9999999; /* Un número muy alto para estar encima de todo */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: system-ui, -apple-system, sans-serif;
+    backdrop-filter: blur(5px); /* Efecto borroso opcional para el fondo */
+  }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+  /* Diseño de la tarjeta central */
+  .tarjeta-aviso {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    animation: aparecer 0.3s ease-out;
+  }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text);
-            transition: background-color 0.8s ease-in-out; /* Transición suave al match */
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+  .tarjeta-aviso h1 {
+    margin-top: 0;
+    color: #1a1a1a;
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
 
-        /* Contenedor tipo App Móvil */
-        #app-container {
-            width: 100%;
-            max-width: 414px; /* Tamaño iPhone Max */
-            height: 100%;
-            max-height: 900px;
-            background: var(--white);
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
-        }
+  .tarjeta-aviso p {
+    color: #666;
+    margin-bottom: 30px;
+    line-height: 1.5;
+  }
 
-        @media (min-width: 450px) {
-            #app-container { height: 90vh; border-radius: 30px; }
-        }
+  /* Diseño del botón */
+  .boton-migrar {
+    background-color: #000000;
+    color: white;
+    text-decoration: none;
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    display: inline-block;
+    transition: transform 0.2s, background-color 0.2s;
+    border: none;
+    cursor: pointer;
+  }
 
-        /* Vistas */
-        .view {
-            flex: 1;
-            display: none;
-            overflow-y: auto;
-            flex-direction: column;
-            background: white;
-        }
-        .view.active { display: flex; }
+  .boton-migrar:hover {
+    background-color: #333333;
+    transform: scale(1.05);
+  }
 
-        /* AUTH VIEW */
-        #auth-view { justify-content: center; padding: 40px; text-align: center; }
-        .logo { font-family: 'Billabong', cursive; font-size: 3rem; margin-bottom: 30px; display: block; }
-        input {
-            width: 100%; padding: 12px; margin: 8px 0; background: #fafafa;
-            border: 1px solid var(--border); border-radius: 3px; outline: none; font-size: 14px;
-        }
-        button.btn-primary {
-            width: 100%; padding: 10px; background: #0095f6;
-            color: white; border: none; border-radius: 4px; font-weight: 600;
-            cursor: pointer; margin-top: 15px;
-        }
-        .auth-switch { margin-top: 20px; font-size: 14px; color: #0095f6; cursor: pointer; }
+  /* Animación suave de entrada */
+  @keyframes aparecer {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+</style>
 
-        /* HEADER & NAVBAR */
-        .app-header {
-            height: 50px; border-bottom: 1px solid var(--border); display: flex;
-            align-items: center; justify-content: space-between; padding: 0 15px;
-            background: white; z-index: 10; font-weight: bold; font-size: 1.2rem;
-        }
-        
-        .navbar {
-            height: 50px; border-top: 1px solid var(--border); display: flex;
-            justify-content: space-around; align-items: center; background: white; z-index: 10;
-        }
-        .nav-icon { font-size: 24px; color: #262626; cursor: pointer; transition: transform 0.1s;}
-        .nav-icon:active { transform: scale(0.9); }
-        .nav-icon.active { color: var(--primary); }
-
-        /* PERFIL (Instagram Style) */
-        .profile-top { padding: 20px 15px; display: flex; align-items: center; }
-        .profile-img-container { margin-right: 20px; position: relative; }
-        .profile-img {
-            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
-            border: 1px solid var(--border); padding: 2px;
-        }
-        .profile-stats { display: flex; gap: 20px; text-align: center; flex: 1; justify-content: space-around; }
-        .stat-val { font-weight: bold; display: block; font-size: 18px; }
-        .stat-label { font-size: 12px; color: #8e8e8e; }
-        
-        .bio-section { padding: 0 15px 15px; font-size: 14px; }
-        .bio-name { font-weight: bold; }
-        
-        /* Destacadas */
-        .highlights { display: flex; gap: 15px; overflow-x: auto; padding: 0 15px 15px; scrollbar-width: none; }
-        .highlight-item { display: flex; flex-direction: column; align-items: center; min-width: 64px; }
-        .highlight-circle {
-            width: 60px; height: 60px; border-radius: 50%; border: 1px solid #dbdbdb; padding: 2px;
-            display: flex; align-items: center; justify-content: center; background: #fafafa;
-        }
-        .highlight-circle i { font-size: 24px; color: #262626; }
-        .highlight-text { font-size: 11px; margin-top: 5px; }
-
-        /* Grid Fotos */
-        .photo-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
-        .grid-item { position: relative; padding-bottom: 100%; background: #efefef; overflow: hidden; }
-        .grid-item img { position: absolute; width: 100%; height: 100%; object-fit: cover; }
-        .add-post-btn { 
-            grid-column: 1 / -1; padding: 10px; margin: 10px; text-align: center; 
-            border: 1px dashed #ccc; color: #888; cursor: pointer; 
-        }
-
-        /* SWIPE / MATCH (Tinder Style) */
-        #swipe-view { position: relative; background: #f0f0f0; }
-        .card-container {
-            flex: 1; position: relative; margin: 15px; display: flex; justify-content: center;
-        }
-        .tinder-card {
-            position: absolute; width: 100%; height: 100%; max-height: 550px;
-            background: white; border-radius: 10px; overflow: hidden;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); display: flex; flex-direction: column;
-        }
-        .tinder-card img { width: 100%; height: 75%; object-fit: cover; }
-        .card-details { padding: 15px; height: 25%; background: white; }
-        .card-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
-        
-        .controls {
-            height: 80px; display: flex; justify-content: center; align-items: center; gap: 30px; padding-bottom: 10px;
-        }
-        .control-btn {
-            width: 60px; height: 60px; border-radius: 50%; background: white;
-            border: none; box-shadow: 0 2px 6px rgba(0,0,0,0.1); cursor: pointer;
-            font-size: 24px; display: flex; align-items: center; justify-content: center;
-            transition: transform 0.2s;
-        }
-        .control-btn:active { transform: scale(0.9); }
-        .btn-pass { color: #ff3b30; border: 1px solid #ff3b30; } /* Izquierda */
-        .btn-match { color: #4cd964; border: 1px solid #4cd964; } /* Derecha */
-
-        /* CHAT */
-        .chat-row {
-            padding: 12px 15px; display: flex; align-items: center; border-bottom: 1px solid #efefef; cursor: pointer;
-        }
-        .chat-row:hover { background: #fafafa; }
-        .chat-avatar { width: 50px; height: 50px; border-radius: 50%; margin-right: 15px; background: #ddd; }
-        .chat-preview { flex: 1; }
-        .chat-name { font-weight: 600; font-size: 14px; }
-        .chat-msg { color: #8e8e8e; font-size: 13px; margin-top: 2px; }
-        .streak-badge { color: #ff9500; font-weight: bold; font-size: 12px; display: flex; align-items: center; gap: 4px; }
-
-        /* PANTALLA CONVERSACIÓN */
-        #conversation-view { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: white; z-index: 50; display: none; flex-direction: column; 
-        }
-        .chat-nav { 
-            padding: 10px 15px; border-bottom: 1px solid #dbdbdb; display: flex; align-items: center; 
-        }
-        .messages-area { flex: 1; padding: 15px; overflow-y: auto; background: white; display: flex; flex-direction: column; gap: 8px;}
-        .msg { max-width: 70%; padding: 10px 14px; border-radius: 20px; font-size: 14px; line-height: 1.4; }
-        .msg-me { align-self: flex-end; background: #efefef; color: black; border-bottom-right-radius: 4px; }
-        .msg-them { align-self: flex-start; background: white; border: 1px solid #dbdbdb; border-bottom-left-radius: 4px; }
-        
-        .input-bar { 
-            padding: 10px; border-top: 1px solid #dbdbdb; display: flex; gap: 10px; align-items: center;
-        }
-        .input-bar input { margin: 0; border-radius: 20px; padding: 10px 15px; }
-
-        /* MATCH OVERLAY */
-        .match-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(128, 0, 0, 0.95); z-index: 100;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center; animation: popIn 0.5s ease;
-        }
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1); } }
-        .match-title { font-family: 'Billabong', cursive; font-size: 4rem; color: white; margin-bottom: 20px; }
-        .match-avatars { display: flex; gap: 20px; margin-bottom: 30px; }
-        .match-avatars img { width: 100px; height: 100px; border-radius: 50%; border: 4px solid white; }
-
-    </style>
-</head>
-<body>
-
-    <div id="match-screen" class="match-overlay">
-        <div class="match-title">It's a Match!</div>
-        <div class="match-avatars">
-            <img id="match-my-img" src="" alt="">
-            <img id="match-their-img" src="" alt="">
-        </div>
-        <p>Ahora podéis chatear y aumentar vuestra racha 🔥</p>
-        <button onclick="closeMatch()" style="margin-top: 30px; padding: 12px 30px; border:none; border-radius: 25px; background: white; color: maroon; font-weight: bold; font-size: 16px; cursor: pointer;">Seguir deslizando</button>
-    </div>
-
-    <div id="app-container">
-        
-        <div id="auth-view" class="view active">
-            <span class="logo" style="font-family: sans-serif; font-weight: 800; color: var(--match-bg);">Meetly</span>
-            <div id="auth-forms">
-                <input type="text" id="reg-name" placeholder="Nombre completo" style="display:none;">
-                <input type="email" id="email" placeholder="Correo electrónico">
-                <input type="password" id="password" placeholder="Contraseña">
-                <button class="btn-primary" onclick="handleAuth()" id="auth-btn">Iniciar Sesión</button>
-                <div class="auth-switch" onclick="toggleAuth()">¿No tienes cuenta? Regístrate</div>
-            </div>
-        </div>
-
-        <div id="swipe-view" class="view">
-            <div class="app-header">
-                <i class="fas fa-camera" style="color:transparent"></i>
-                <span>Descubrir</span>
-                <i class="fas fa-filter" style="font-size: 18px;"></i>
-            </div>
-            <div class="card-container" id="card-stack">
-                <div style="align-self: center; text-align: center; color: #888;">
-                    <i class="fas fa-spinner fa-spin fa-2x"></i><br><br>Buscando personas...
-                </div>
-            </div>
-            <div class="controls">
-                <button class="control-btn btn-pass" onclick="processSwipe('pass')"><i class="fas fa-times"></i></button>
-                <button class="control-btn btn-match" onclick="processSwipe('like')"><i class="fas fa-heart"></i></button>
-            </div>
-        </div>
-
-        <div id="profile-view" class="view">
-            <div class="app-header">
-                <span id="header-username">mi_usuario</span>
-                <i class="fas fa-cog" onclick="logout()"></i>
-            </div>
-            
-            <div class="profile-top">
-                <div class="profile-img-container">
-                    <img src="" id="my-profile-pic" class="profile-img">
-                </div>
-                <div class="profile-stats">
-                    <div><span class="stat-val" id="stat-posts">0</span><span class="stat-label">Posts</span></div>
-                    <div><span class="stat-val" id="stat-followers">0</span><span class="stat-label">Seguidores</span></div>
-                    <div><span class="stat-val" id="stat-following">0</span><span class="stat-label">Seguidos</span></div>
-                </div>
-            </div>
-
-            <div class="bio-section">
-                <div class="bio-name" id="display-name">Nombre</div>
-                <div id="bio-text">Bienvenido a mi perfil de Meetly.</div>
-            </div>
-
-            <div class="highlights">
-                <div class="highlight-item">
-                    <div class="highlight-circle"><i class="fas fa-heart"></i></div>
-                    <span class="highlight-text">Love</span>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-circle"><i class="fas fa-star"></i></div>
-                    <span class="highlight-text">Yo</span>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-circle"><i class="fas fa-plane"></i></div>
-                    <span class="highlight-text">Viajes</span>
-                </div>
-                <div class="highlight-item">
-                    <div class="highlight-circle"><i class="fas fa-plus" style="color:#ccc"></i></div>
-                    <span class="highlight-text">Nuevo</span>
-                </div>
-            </div>
-
-            <div class="photo-grid" id="my-grid">
-                <div class="add-post-btn" onclick="addRandomPost()">+ Añadir Foto Random</div>
-                </div>
-        </div>
-
-        <div id="chat-list-view" class="view">
-            <div class="app-header">
-                <span>Mensajes</span>
-                <i class="fas fa-edit"></i>
-            </div>
-            <div id="matches-list">
-                </div>
-        </div>
-
-        <div class="navbar" id="navbar" style="display:none;">
-            <i class="fas fa-home nav-icon" onclick="nav('swipe-view', this)"></i> <i class="fas fa-search nav-icon"></i>
-            <i class="fas fa-comment-dots nav-icon" onclick="nav('chat-list-view', this)"></i> <i class="fas fa-user nav-icon" onclick="nav('profile-view', this)"></i> </div>
-
-        <div id="conversation-view">
-            <div class="chat-nav">
-                <i class="fas fa-arrow-left" onclick="closeChat()" style="font-size: 20px; padding: 10px; cursor: pointer;"></i>
-                <img id="chat-header-img" src="" style="width: 30px; height: 30px; border-radius: 50%; margin: 0 10px;">
-                <span id="chat-header-name" style="font-weight: bold;">Usuario</span>
-            </div>
-            <div id="msg-container" class="messages-area"></div>
-            <div class="input-bar">
-                <input type="text" id="msg-input" placeholder="Envía un mensaje...">
-                <span style="color: var(--primary); font-weight: bold; cursor: pointer;" onclick="sendMsg()">Enviar</span>
-            </div>
-        </div>
-
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getDatabase, ref, set, push, onValue, get, update, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyCnacFrX45poWxbECXN6F1Dxn1VDbHeDs4",
-            authDomain: "meetly-43fb0.firebaseapp.com",
-            databaseURL: "https://meetly-43fb0-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "meetly-43fb0",
-            storageBucket: "meetly-43fb0.firebasestorage.app",
-            messagingSenderId: "175527440295",
-            appId: "1:175527440295:web:f5aea71bf0d1668e825082"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getDatabase(app);
-
-        let currentUser = null;
-        let cardQueue = [];
-        let currentCardIndex = 0;
-        let activeChatID = null;
-
-        // --- AUTH ---
-        let isRegister = false;
-        window.toggleAuth = () => {
-            isRegister = !isRegister;
-            document.getElementById('reg-name').style.display = isRegister ? 'block' : 'none';
-            document.getElementById('auth-btn').innerText = isRegister ? 'Registrarse' : 'Entrar';
-            document.querySelector('.auth-switch').innerText = isRegister ? '¿Ya tienes cuenta? Entra' : '¿No tienes cuenta? Regístrate';
-        }
-
-        window.handleAuth = async () => {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
-            const name = document.getElementById('reg-name').value;
-
-            try {
-                if(isRegister) {
-                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    // Crear perfil inicial
-                    const uid = cred.user.uid;
-                    const randomPic = `https://api.dicebear.com/7.x/avataaars/svg?seed=${uid}`;
-                    await set(ref(db, 'users/' + uid), {
-                        name: name,
-                        email: email,
-                        photo: randomPic,
-                        bio: "Nuevo en Meetly ✨",
-                        followers: 0,
-                        following: 0
-                    });
-                    // Añadir 3 fotos dummy iniciales
-                    for(let i=0; i<3; i++) push(ref(db, `posts/${uid}`), { img: `https://picsum.photos/400?random=${uid}${i}` });
-                } else {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                }
-            } catch(e) { alert("Error: " + e.message); }
-        }
-
-        window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, (user) => {
-            if(user) {
-                currentUser = user;
-                document.getElementById('auth-view').classList.remove('active');
-                document.getElementById('navbar').style.display = 'flex';
-                // Ir a perfil por defecto para cargar datos
-                nav('swipe-view', document.querySelectorAll('.nav-icon')[0]);
-                loadMyProfile();
-                loadCards();
-                listenMatches();
-            } else {
-                currentUser = null;
-                document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-                document.getElementById('auth-view').classList.add('active');
-                document.getElementById('navbar').style.display = 'none';
-                document.body.style.backgroundColor = "var(--bg-color)"; // Reset color
-            }
-        });
-
-        // --- NAVIGATION ---
-        window.nav = (viewId, iconEl) => {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
-            
-            document.querySelectorAll('.nav-icon').forEach(i => i.classList.remove('active'));
-            if(iconEl) iconEl.classList.add('active');
-
-            // Reset background color si no estamos en swipe o match
-            if(document.body.style.backgroundColor !== "var(--match-bg)") {
-                document.body.style.backgroundColor = "var(--bg-color)";
-            }
-        }
-
-        // --- PROFILE LOGIC ---
-        function loadMyProfile() {
-            onValue(ref(db, 'users/' + currentUser.uid), (snap) => {
-                const data = snap.val();
-                if(!data) return;
-                document.getElementById('header-username').innerText = data.name.toLowerCase().replace(/\s/g, '_');
-                document.getElementById('display-name').innerText = data.name;
-                document.getElementById('my-profile-pic').src = data.photo;
-                document.getElementById('stat-followers').innerText = data.followers;
-                document.getElementById('stat-following').innerText = data.following;
-            });
-
-            // Cargar posts
-            onValue(ref(db, 'posts/' + currentUser.uid), (snap) => {
-                const posts = snap.val();
-                const grid = document.getElementById('my-grid');
-                // Mantener botón de añadir
-                grid.innerHTML = '<div class="add-post-btn" onclick="addRandomPost()">+ Añadir Foto Random</div>';
-                
-                if(posts) {
-                    let count = 0;
-                    Object.values(posts).forEach(p => {
-                        const div = document.createElement('div');
-                        div.className = 'grid-item';
-                        div.innerHTML = `<img src="${p.img}">`;
-                        grid.appendChild(div);
-                        count++;
-                    });
-                    document.getElementById('stat-posts').innerText = count;
-                }
-            });
-        }
-
-        window.addRandomPost = () => {
-            const r = Math.floor(Math.random() * 1000);
-            push(ref(db, `posts/${currentUser.uid}`), {
-                img: `https://picsum.photos/400?random=${r}`
-            });
-        }
-
-        // --- SWIPE LOGIC ---
-        async function loadCards() {
-            const allUsersSnap = await get(ref(db, 'users'));
-            const mySwipesSnap = await get(ref(db, `swipes/${currentUser.uid}`));
-            
-            const allUsers = allUsersSnap.val() || {};
-            const mySwipes = mySwipesSnap.val() || {};
-            
-            cardQueue = [];
-            Object.keys(allUsers).forEach(uid => {
-                if(uid !== currentUser.uid && !mySwipes[uid]) {
-                    cardQueue.push({ uid, ...allUsers[uid] });
-                }
-            });
-            currentCardIndex = 0;
-            renderCurrentCard();
-        }
-
-        function renderCurrentCard() {
-            const container = document.getElementById('card-stack');
-            container.innerHTML = '';
-            
-            if(currentCardIndex >= cardQueue.length) {
-                container.innerHTML = '<div style="align-self:center; text-align:center; color:#666;"><h3>No hay más perfiles</h3><p>Vuelve más tarde</p></div>';
-                return;
-            }
-
-            const user = cardQueue[currentCardIndex];
-            // Intentar sacar una foto de sus posts, si no, avatar
-            get(ref(db, `posts/${user.uid}`)).then(snap => {
-                let displayImg = user.photo;
-                if(snap.val()) {
-                    const posts = Object.values(snap.val());
-                    if(posts.length > 0) displayImg = posts[0].img;
-                }
-                
-                const card = document.createElement('div');
-                card.className = 'tinder-card';
-                card.innerHTML = `
-                    <img src="${displayImg}">
-                    <div class="card-details">
-                        <div class="card-name">${user.name}</div>
-                        <div style="color:#666;">${user.bio}</div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        window.processSwipe = async (type) => { // 'like' or 'pass'
-            if(currentCardIndex >= cardQueue.length) return;
-            
-            const target = cardQueue[currentCardIndex];
-            
-            // Guardar acción
-            await set(ref(db, `swipes/${currentUser.uid}/${target.uid}`), type);
-            
-            if(type === 'like') {
-                // Check Match
-                const check = await get(ref(db, `swipes/${target.uid}/${currentUser.uid}`));
-                if(check.val() === 'like') {
-                    doMatch(target);
-                }
-            }
-
-            currentCardIndex++;
-            renderCurrentCard();
-        }
-
-        function doMatch(targetUser) {
-            // CAMBIO DE COLOR GLOBAL A GRANATE
-            document.body.style.backgroundColor = "var(--match-bg)";
-            
-            // Mostrar Overlay
-            const overlay = document.getElementById('match-screen');
-            document.getElementById('match-my-img').src = document.getElementById('my-profile-pic').src;
-            document.getElementById('match-their-img').src = targetUser.photo;
-            overlay.style.display = 'flex';
-
-            // Crear registro de match
-            const matchId = [currentUser.uid, targetUser.uid].sort().join('_');
-            const matchData = { timestamp: Date.now(), streak: 0 };
-            
-            update(ref(db), {
-                [`matches/${currentUser.uid}/${targetUser.uid}`]: matchData,
-                [`matches/${targetUser.uid}/${currentUser.uid}`]: matchData
-            });
-        }
-
-        window.closeMatch = () => {
-            document.getElementById('match-screen').style.display = 'none';
-            // Volver al rosa suave después de un momento
-            setTimeout(() => {
-                document.body.style.backgroundColor = "var(--bg-color)";
-            }, 500);
-        }
-
-        // --- CHAT & MATCH LIST ---
-        function listenMatches() {
-            onValue(ref(db, `matches/${currentUser.uid}`), async (snap) => {
-                const list = document.getElementById('matches-list');
-                list.innerHTML = '';
-                const matches = snap.val();
-                
-                if(!matches) {
-                    list.innerHTML = '<p style="padding:20px; text-align:center; color:#999;">Aún no tienes matches. ¡Ve a descubrir!</p>';
-                    return;
-                }
-
-                for(const uid of Object.keys(matches)) {
-                    const userSnap = await get(ref(db, `users/${uid}`));
-                    const uData = userSnap.val();
-                    const streak = matches[uid].streak;
-
-                    const row = document.createElement('div');
-                    row.className = 'chat-row';
-                    row.onclick = () => openChat(uid, uData);
-                    row.innerHTML = `
-                        <img src="${uData.photo}" class="chat-avatar">
-                        <div class="chat-preview">
-                            <div class="chat-name">${uData.name}</div>
-                            <div class="chat-msg">Toca para chatear</div>
-                        </div>
-                        ${streak > 0 ? `<div class="streak-badge">🔥 ${streak}</div>` : ''}
-                    `;
-                    list.appendChild(row);
-                }
-            });
-        }
-
-        window.openChat = (targetUid, targetData) => {
-            activeChatID = [currentUser.uid, targetUid].sort().join('_');
-            
-            document.getElementById('chat-header-name').innerText = targetData.name;
-            document.getElementById('chat-header-img').src = targetData.photo;
-            
-            const view = document.getElementById('conversation-view');
-            view.style.display = 'flex';
-
-            // Cargar mensajes
-            onValue(ref(db, `messages/${activeChatID}`), (snap) => {
-                const container = document.getElementById('msg-container');
-                container.innerHTML = '';
-                const msgs = snap.val();
-                if(msgs) {
-                    Object.values(msgs).forEach(m => {
-                        const div = document.createElement('div');
-                        div.className = `msg ${m.sender === currentUser.uid ? 'msg-me' : 'msg-them'}`;
-                        div.innerText = m.text;
-                        container.appendChild(div);
-                    });
-                    container.scrollTop = container.scrollHeight;
-                }
-            });
-        }
-
-        window.closeChat = () => {
-            document.getElementById('conversation-view').style.display = 'none';
-            activeChatID = null;
-        }
-
-        window.sendMsg = () => {
-            const input = document.getElementById('msg-input');
-            const txt = input.value.trim();
-            if(!txt || !activeChatID) return;
-
-            push(ref(db, `messages/${activeChatID}`), {
-                text: txt,
-                sender: currentUser.uid,
-                timestamp: serverTimestamp()
-            });
-            input.value = '';
-        }
-
-    </script>
-</body>
-</html>
+<div id="overlay-migracion-total">
+  <div class="tarjeta-aviso">
+    <h1>Meetly ahora es UnClick</h1>
+    <p>Esta versión ha dejado de funcionar. Para continuar utilizando la plataforma, es necesario migrar a la nueva versión.</p>
+    
+    <a href="https://un-click.vercel.app" class="boton-migrar">
+      Migrar ahora
+    </a>
+  </div>
+</div>
