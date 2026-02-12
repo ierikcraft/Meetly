@@ -108,6 +108,16 @@
         .progress-fill { height: 100%; background: white; width: 0%; transition: width 0.1s linear; }
         .story-header { padding: 0 15px; color: white; display: flex; align-items: center; gap: 10px; }
         .story-main-img { flex: 1; width: 100%; object-fit: contain; }
+        
+        /* Post Viewer (Overlay para borrar posts) */
+        #post-viewer-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); z-index: 2500; display: none; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        /* Botón Borrar */
+        .btn-delete { color: white; margin-left: auto; cursor: pointer; font-size: 18px; padding: 10px; }
 
         /* FAB */
         .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; }
@@ -123,9 +133,18 @@
         <div class="story-header">
             <img id="sv-avatar" src="" style="width:30px;height:30px;border-radius:50%;">
             <b id="sv-name">Usuario</b>
-            <i class="fas fa-times" onclick="closeStory()" style="margin-left:auto; font-size:20px; cursor:pointer;"></i>
+            <i id="sv-delete-btn" class="fas fa-trash btn-delete" style="display: none;" onclick="deleteCurrentStory()"></i>
+            <i class="fas fa-times" onclick="closeStory()" style="color:white; font-size:24px; padding:10px; cursor:pointer; margin-left: 10px;"></i>
         </div>
         <img id="sv-img" class="story-main-img" src="">
+    </div>
+
+    <div id="post-viewer-overlay">
+        <div style="width: 100%; padding: 20px; display: flex; justify-content: flex-end;">
+             <i id="pv-delete-btn" class="fas fa-trash btn-delete" style="display: none; margin-right: 20px;" onclick="deleteCurrentPost()"></i>
+             <i class="fas fa-times" style="color: white; font-size: 24px; cursor: pointer;" onclick="closePostViewer()"></i>
+        </div>
+        <img id="pv-img" src="" style="width: 100%; max-height: 80%; object-fit: contain;">
     </div>
 
     <div id="match-alert" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(128,0,0,0.95);z-index:3000;display:none;flex-direction:column;align-items:center;justify-content:center;color:white;">
@@ -295,7 +314,12 @@
         let potentialMatches = [];
         let cardIndex = 0;
         let activeChatId = null;
-        let viewingUserUid = null; // Para ver perfil de otro
+        let viewingUserUid = null;
+        
+        // Variables para manejo de eliminación
+        let currentStoryId = null;
+        let currentStoryIsHighlight = false;
+        let currentPostId = null;
 
         // AUTH
         let isReg = false;
@@ -314,6 +338,7 @@
                 if(isReg) {
                     if(!name) return alert("Pon tu nombre");
                     const cred = await createUserWithEmailAndPassword(auth, email, pass);
+                    // Solo creamos usuario básico, SIN posts dummy para evitar interrogantes
                     await set(ref(db, 'users/' + cred.user.uid), { name, email, bio: "¡Hola Meetly!", photo: "" });
                 } else {
                     await signInWithEmailAndPassword(auth, email, pass);
@@ -461,18 +486,25 @@
             const isFollowing = followSnap.exists();
             updateFollowBtn(isFollowing);
 
-            // Load counts (simple calculation)
             const followers = u.followers ? Object.keys(u.followers).length : 0;
             const following = u.following ? Object.keys(u.following).length : 0;
             document.getElementById('pp-followers').innerText = followers;
             document.getElementById('pp-following').innerText = following;
 
-            // Load posts
+            // Load posts (FILTRADOS)
             const grid = document.getElementById('pp-grid');
             grid.innerHTML = '';
+            let validPosts = [];
+            
             if(u.posts) {
-                document.getElementById('pp-posts-count').innerText = Object.keys(u.posts).length;
                 Object.values(u.posts).forEach(p => {
+                    if(p.image && p.image.startsWith('data:image')) {
+                        validPosts.push(p);
+                    }
+                });
+                
+                document.getElementById('pp-posts-count').innerText = validPosts.length;
+                validPosts.forEach(p => {
                     const img = document.createElement('img');
                     img.className = 'grid-img';
                     img.src = p.image;
@@ -508,19 +540,17 @@
             
             const snap = await get(myRef);
             if(snap.exists()) {
-                // Unfollow
                 await remove(myRef);
                 await remove(theirRef);
                 updateFollowBtn(false);
             } else {
-                // Follow
                 await set(myRef, true);
                 await set(theirRef, true);
                 updateFollowBtn(true);
             }
         }
 
-        // STORIES & HIGHLIGHTS
+        // STORIES & HIGHLIGHTS & DELETE
         function loadStories() {
             onValue(ref(db, 'stories'), async (snap) => {
                 const bar = document.getElementById('stories-bar');
@@ -532,7 +562,11 @@
                 const data = snap.val();
                 if(data) {
                     const done = new Set();
-                    Object.values(data).reverse().forEach(async s => {
+                    // Necesitamos clave para borrar
+                    const storiesArr = [];
+                    Object.keys(data).forEach(key => storiesArr.push({...data[key], id: key}));
+                    
+                    storiesArr.reverse().forEach(async s => {
                         if(done.has(s.uid)) return;
                         done.add(s.uid);
                         const uSnap = await get(ref(db, `users/${s.uid}`));
@@ -540,8 +574,11 @@
                         if(u) {
                             const safeImg = s.image.replace(/'/g, "\\'"); 
                             const safeName = u.name.replace(/'/g, "\\'");
+                            const isMine = (s.uid === currentUser.uid);
+                            
+                            // Pasamos ID y dueño para boton borrar
                              html += `
-                            <div class="story-item" onclick="viewStory('${safeImg}','${safeName}')">
+                            <div class="story-item" onclick="viewStory('${safeImg}','${safeName}', '${s.id}', '${s.uid}', false)">
                                 <div class="story-ring"><img src="${u.photo||''}" class="story-img"></div>
                                 <span class="story-name">${u.name}</span>
                             </div>`;
@@ -553,14 +590,40 @@
             });
         }
 
-        window.viewStory = (img, name) => {
+        // viewStory actualizado para Delete
+        window.viewStory = (img, name, id, ownerUid, isHighlight) => {
             document.getElementById('sv-img').src = img;
             document.getElementById('sv-name').innerText = name;
             document.getElementById('story-viewer').style.display = 'flex';
+            
+            // Logica borrar
+            currentStoryId = id;
+            currentStoryIsHighlight = isHighlight;
+            const delBtn = document.getElementById('sv-delete-btn');
+            
+            if(ownerUid === currentUser.uid || ownerUid === 'me') {
+                delBtn.style.display = 'block';
+            } else {
+                delBtn.style.display = 'none';
+            }
+
             document.getElementById('story-progress').style.width = '0%';
             setTimeout(() => document.getElementById('story-progress').style.width = '100%', 50);
-            setTimeout(closeStory, 5000);
+            // No cerrar automatico si es destacada o si queremos borrar
         }
+        
+        window.deleteCurrentStory = async () => {
+            if(!confirm("¿Borrar esta historia?")) return;
+            
+            if(currentStoryIsHighlight) {
+                await remove(ref(db, `users/${currentUser.uid}/highlights/${currentStoryId}`));
+            } else {
+                await remove(ref(db, `stories/${currentStoryId}`));
+            }
+            closeStory();
+            loadProfile(); // recargar si era highlight
+        }
+
         window.closeStory = () => document.getElementById('story-viewer').style.display = 'none';
 
         // FEED & PROFILE
@@ -570,8 +633,13 @@
                 c.innerHTML = '';
                 const data = snap.val();
                 if(!data) { c.innerHTML='<div style="padding:20px;text-align:center;color:#999">No hay posts</div>'; return; }
+                
                 const posts = Object.values(data).sort((a,b)=>b.timestamp-a.timestamp);
+                
                 for(const p of posts) {
+                    // Filtrar interrogantes en feed tambien
+                    if(!p.image || !p.image.startsWith('data:image')) continue;
+
                     const uSnap = await get(ref(db, `users/${p.uid}`));
                     const u = uSnap.val();
                     const d = document.createElement('div');
@@ -597,7 +665,6 @@
                 document.getElementById('edit-name').value = u.name;
                 document.getElementById('edit-bio').value = u.bio;
                 
-                // Followers/Following
                 const f1 = u.followers ? Object.keys(u.followers).length : 0;
                 const f2 = u.following ? Object.keys(u.following).length : 0;
                 document.getElementById('p-followers').innerText = f1;
@@ -612,10 +679,12 @@
                     </div>
                 `;
                 if(u.highlights) {
-                    Object.values(u.highlights).forEach(h => {
-                         const safeImg = h.image.replace(/'/g, "\\'");
+                    Object.keys(u.highlights).forEach(key => {
+                        const h = u.highlights[key];
+                        const safeImg = h.image.replace(/'/g, "\\'");
+                        // Pasamos true en isHighlight
                         hlHtml += `
-                        <div class="highlight-item" onclick="viewStory('${safeImg}', 'Destacada')">
+                        <div class="highlight-item" onclick="viewStory('${safeImg}', 'Destacada', '${key}', 'me', true)">
                             <div class="hl-circle"><img src="${h.image}" class="hl-img"></div>
                             <span class="hl-title">${h.title}</span>
                         </div>`;
@@ -623,19 +692,55 @@
                 }
                 hlDiv.innerHTML = hlHtml;
 
-                // Posts
+                // Posts (CON FILTRO Y BORRADO)
                 const grid = document.getElementById('profile-grid');
                 grid.innerHTML = '';
+                
+                let validPosts = [];
                 if(u.posts) {
-                    document.getElementById('p-posts-count').innerText = Object.keys(u.posts).length;
-                    Object.values(u.posts).forEach(p => {
-                        const i = document.createElement('img');
-                        i.className = 'grid-img';
-                        i.src = p.image;
-                        grid.appendChild(i);
+                    Object.keys(u.posts).forEach(key => {
+                        const p = u.posts[key];
+                        // SOLO si tiene imagen real
+                        if(p.image && p.image.startsWith('data:image')) {
+                            validPosts.push({...p, id: key});
+                        }
                     });
                 }
+
+                document.getElementById('p-posts-count').innerText = validPosts.length;
+                
+                validPosts.forEach(p => {
+                    const i = document.createElement('img');
+                    i.className = 'grid-img';
+                    i.src = p.image;
+                    // Click para ver y borrar
+                    i.onclick = () => openPostViewer(p.image, p.id);
+                    grid.appendChild(i);
+                });
             });
+        }
+        
+        // POST VIEWER & DELETE LOGIC
+        window.openPostViewer = (img, id) => {
+            document.getElementById('pv-img').src = img;
+            currentPostId = id;
+            document.getElementById('post-viewer-overlay').style.display = 'flex';
+            document.getElementById('pv-delete-btn').style.display = 'block';
+        }
+        
+        window.closePostViewer = () => {
+             document.getElementById('post-viewer-overlay').style.display = 'none';
+        }
+
+        window.deleteCurrentPost = async () => {
+            if(!confirm("¿Borrar publicación?")) return;
+            // Borrar de global y de user
+            const updates = {};
+            updates[`/posts/${currentPostId}`] = null;
+            updates[`/users/${currentUser.uid}/posts/${currentPostId}`] = null;
+            
+            await update(ref(db), updates);
+            closePostViewer();
         }
 
         window.openEditProfile = () => document.getElementById('edit-modal').classList.add('active');
@@ -653,7 +758,16 @@
             const sSnap = await get(ref(db, `swipes/${currentUser.uid}`));
             const swipes = sSnap.val() || {};
             potentialMatches = [];
-            if(all) Object.keys(all).forEach(k => { if(k!==currentUser.uid && !swipes[k]) potentialMatches.push({uid:k,...all[k]}); });
+            
+            if(all) {
+                Object.keys(all).forEach(k => { 
+                    // Filtramos gente sin foto
+                    const user = all[k];
+                    if(k!==currentUser.uid && !swipes[k] && user.photo) {
+                        potentialMatches.push({uid:k,...user}); 
+                    }
+                });
+            }
             cardIndex = 0;
             renderCard();
         }
