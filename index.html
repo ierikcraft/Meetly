@@ -354,6 +354,38 @@
             background: #eee;
         }
 
+        .grid-item-text {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            overflow: hidden;
+            font-weight: bold;
+        }
+
+        .grid-item-text {
+            width: 100%;
+            aspect-ratio: 1/1;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            font-size: 11px;
+            text-align: center;
+            cursor: pointer;
+            overflow: hidden;
+            font-weight: bold;
+        }
+
         /* --- NAVBAR --- */
         .navbar {
             position: absolute;
@@ -995,17 +1027,24 @@
 
             if (u.posts) {
                 Object.values(u.posts).forEach(p => {
-                    if (p.image && p.image.startsWith('data:image')) {
+                    if ((p.image && p.image.startsWith('data:image')) || p.title || p.description) {
                         validPosts.push(p);
                     }
                 });
 
                 document.getElementById('pp-posts-count').innerText = validPosts.length;
                 validPosts.forEach(p => {
-                    const img = document.createElement('img');
-                    img.className = 'grid-img';
-                    img.src = p.image;
-                    grid.appendChild(img);
+                    let el;
+                    if (p.image && p.image.startsWith('data:image')) {
+                        el = document.createElement('img');
+                        el.className = 'grid-img';
+                        el.src = p.image;
+                    } else {
+                        el = document.createElement('div');
+                        el.className = 'grid-item-text';
+                        el.innerText = p.title || p.description || "Texto";
+                    }
+                    grid.appendChild(el);
                 });
             } else {
                 document.getElementById('pp-posts-count').innerText = 0;
@@ -1315,8 +1354,8 @@
                 if (u.posts) {
                     Object.keys(u.posts).forEach(key => {
                         const p = u.posts[key];
-                        // SOLO si tiene imagen real
-                        if (p.image && p.image.startsWith('data:image')) {
+                        // Support text posts
+                        if ((p.image && p.image.startsWith('data:image')) || p.title || p.description) {
                             validPosts.push({ ...p, id: key });
                         }
                     });
@@ -1325,12 +1364,22 @@
                 document.getElementById('p-posts-count').innerText = validPosts.length;
 
                 validPosts.forEach(p => {
-                    const i = document.createElement('img');
-                    i.className = 'grid-img';
-                    i.src = p.image;
-                    // Click para ver y borrar
-                    i.onclick = () => openPostViewer(p.image, p.id);
-                    grid.appendChild(i);
+                    let el;
+                    if (p.image && p.image.startsWith('data:image')) {
+                        el = document.createElement('img');
+                        el.className = 'grid-img';
+                        el.src = p.image;
+                        el.onclick = () => openPostViewer(p.image, p.id);
+                    } else {
+                        el = document.createElement('div');
+                        el.className = 'grid-item-text';
+                        el.innerText = p.title || p.description || "Texto";
+                        el.onclick = () => {
+                            // Temporary: show standard placeholder to allow delete
+                            openPostViewer('https://via.placeholder.com/400x400?text=' + encodeURIComponent(p.title || 'Texto'), p.id);
+                        }
+                    }
+                    grid.appendChild(el);
                 });
             });
         }
