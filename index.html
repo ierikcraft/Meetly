@@ -699,6 +699,12 @@
         </div>
 
         <div id="profile-view" class="view">
+            <div
+                style="padding:15px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:bold; font-size: 18px;">Mi Perfil</span>
+                <i class="fas fa-sign-out-alt" onclick="logout()"
+                    style="font-size:20px; cursor:pointer; color: var(--primary);" title="Cerrar Sessión"></i>
+            </div>
             <div class="profile-header">
                 <img src="" id="p-img" class="profile-pic-lg">
                 <div class="stats">
@@ -712,8 +718,6 @@
                 <button class="btn-secondary" onclick="openEditProfile()"
                     style="margin-left:5px; padding:4px 8px;">Editar</button>
                 <div id="p-bio" style="color:#555; font-size: 14px; margin-top:5px;"></div>
-                <button class="btn-secondary" onclick="logout()" style="margin-top:10px; font-size:12px;">Cerrar
-                    Sesión</button>
             </div>
 
             <div class="highlights-sec" id="my-highlights">
@@ -849,11 +853,11 @@
             if (id === 'feed-view') document.querySelectorAll('.nav-item')[0].classList.add('active');
             if (id === 'search-view') document.querySelectorAll('.nav-item')[1].classList.add('active');
             if (id === 'swipe-view') {
-                document.querySelectorAll('.nav-item')[2].classList.add('active');
+                document.querySelectorAll('.nav-item')[3].classList.add('active');
                 loadSwipe();
             }
-            if (id === 'chat-list-view') document.querySelectorAll('.nav-item')[3].classList.add('active');
-            if (id === 'profile-view') document.querySelectorAll('.nav-item')[4].classList.add('active');
+            if (id === 'chat-list-view') document.querySelectorAll('.nav-item')[4].classList.add('active');
+            if (id === 'profile-view') document.querySelectorAll('.nav-item')[5].classList.add('active');
         }
 
         // UPLOAD
