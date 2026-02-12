@@ -1123,16 +1123,22 @@
         // LIKE FUNCTIONALITY
         window.toggleLike = async (pid, uid) => {
             const likeRef = ref(db, `likes/${pid}/${currentUser.uid}`);
+            const countSpan = document.getElementById(`like-count-${pid}`);
+            let count = parseInt(countSpan.innerText) || 0;
+
             const snap = await get(likeRef);
             if (snap.exists()) {
                 await remove(likeRef);
                 document.getElementById(`like-${pid}`).className = "far fa-heart";
                 document.getElementById(`like-${pid}`).style.color = "";
+                count--;
             } else {
                 await set(likeRef, true);
                 document.getElementById(`like-${pid}`).className = "fas fa-heart";
                 document.getElementById(`like-${pid}`).style.color = "red";
+                count++;
             }
+            countSpan.innerText = count;
         }
 
 
@@ -1159,6 +1165,11 @@
                     const uSnap = await get(ref(db, `users/${p.uid}`));
                     const u = uSnap.val();
                     const likedSnap = await get(ref(db, `likes/${p.id}/${currentUser.uid}`));
+
+                    // Get total likes count
+                    const allLikesSnap = await get(ref(db, `likes/${p.id}`));
+                    const likeCount = allLikesSnap.exists() ? Object.keys(allLikesSnap.val()).length : 0;
+
                     const isLiked = likedSnap.exists();
                     const heartClass = isLiked ? "fas fa-heart" : "far fa-heart";
                     const heartColor = isLiked ? "color:red" : "";
@@ -1168,8 +1179,9 @@
                     d.innerHTML = `
                         <div class="post-header"><img src="${u.photo || ''}" class="post-avatar-sm"><span>${u.name}</span></div>
                         <img src="${p.image}" class="post-image">
-                        <div class="post-actions">
+                        <div class="post-actions" style="align-items: center;">
                             <i id="like-${p.id}" class="${heartClass}" style="cursor:pointer; ${heartColor}" onclick="toggleLike('${p.id}', '${p.uid}')"></i>
+                            <span id="like-count-${p.id}" style="font-size: 16px; margin-left: 5px;">${likeCount}</span>
                         </div>
                     `;
 
