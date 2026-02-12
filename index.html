@@ -1021,6 +1021,7 @@
             storyIndex = 0;
             currentHighlightId = isHighlight ? id : null;
             const isMe = (ownerUid === currentUser.uid || ownerUid === 'me');
+            if (ownerUid === 'me') ownerUid = currentUser.uid;
 
             // Setup Buttons
             document.getElementById('sv-add-btn').style.display = (isHighlight && isMe) ? 'block' : 'none';
@@ -1028,6 +1029,7 @@
 
             if (isHighlight) {
                 // Fetch all stories in this highlight
+
                 const hSnap = await get(ref(db, `users/${ownerUid}/highlights/${id}`));
                 const h = hSnap.val();
                 if (h && h.stories) {
