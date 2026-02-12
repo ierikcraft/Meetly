@@ -2,13 +2,13 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Meetly</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #ffd1dc; /* Rosa Pastel */
-            --match-bg: #800000; /* Granate */
+            --bg-color: #ffd1dc;
+            --match-bg: #800000;
             --primary: #ff5e78;
             --white: #ffffff;
             --text: #333333;
@@ -21,78 +21,108 @@
             color: var(--text);
             transition: background-color 0.5s ease;
             height: 100vh;
+            width: 100vw;
             display: flex;
             justify-content: center;
-            overflow: hidden;
+            overflow: hidden; /* Evita scroll en el body */
         }
 
         #app-container {
-            width: 100%; max-width: 450px; background: var(--white);
-            height: 100%; display: flex; flex-direction: column; position: relative;
+            width: 100%;
+            max-width: 450px;
+            background: var(--white);
+            height: 100%;
+            position: relative; /* Clave para posicionar las vistas */
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            overflow: hidden;
         }
 
-        /* --- VISTAS --- */
-        .view { flex: 1; display: none; overflow-y: auto; padding-bottom: 70px; }
-        .view.active { display: flex; flex-direction: column; }
+        /* --- VISTAS (SOLUCIÓN DEL BUG) --- */
+        .view { 
+            position: absolute; /* Se superponen exactamente */
+            top: 0; left: 0;
+            width: 100%; 
+            height: 100%; 
+            background: var(--white); /* Fondo sólido para que no se vea lo de atrás */
+            display: none; 
+            flex-direction: column;
+            overflow-y: auto; /* Scroll interno solo aquí */
+            padding-bottom: 70px; /* Espacio para navbar */
+            z-index: 10;
+        }
+        
+        .view.active { 
+            display: flex; 
+            z-index: 20; /* La activa siempre arriba */
+        }
         
         /* --- AUTH --- */
         #auth-view { justify-content: center; align-items: center; padding: 30px; text-align: center; }
         input { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; background: #fafafa; }
         .btn-primary { width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
-        .btn-secondary { background: white; border: 1px solid #ddd; color: #333; margin-top: 5px; }
+        .btn-secondary { background: white; border: 1px solid #ddd; color: #333; margin-top: 5px; width: 100%; padding: 10px; border-radius: 8px; cursor: pointer;}
 
         /* --- FEED & STORIES --- */
         .stories-bar {
-            padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none;
+            padding: 15px 10px; border-bottom: 1px solid #eee; display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; flex-shrink: 0;
         }
         .stories-bar::-webkit-scrollbar { display: none; }
         
         .story-item { display: flex; flex-direction: column; align-items: center; width: 70px; flex-shrink: 0; cursor: pointer; }
-        
         .story-ring {
             width: 68px; height: 68px; border-radius: 50%; padding: 3px;
             background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-            position: relative;
         }
-        .story-ring.seen { background: #ddd; }
         .story-ring.add { background: none; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; }
-        
         .story-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 2px solid white; background: white; }
         .story-name { font-size: 11px; margin-top: 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         .feed-post { margin-bottom: 15px; border-bottom: 1px solid #eee; }
         .post-header { padding: 10px; display: flex; align-items: center; gap: 10px; font-weight: bold; font-size: 14px; }
         .post-avatar-sm { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .post-image { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; }
+        .post-image { width: 100%; aspect-ratio: 1/1; object-fit: cover; display: block; background: #f0f0f0; }
         .post-actions { padding: 10px; font-size: 24px; gap: 15px; display: flex; }
         .post-caption { padding: 0 10px 15px; font-size: 14px; }
 
         /* --- PROFILE --- */
         .profile-header { padding: 20px; display: flex; align-items: center; }
-        .profile-pic-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 1px solid #ddd; }
-        .stats { display: flex; gap: 20px; text-align: center; flex: 1; justify-content: space-around; }
+        .profile-pic-lg { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-right: 20px; border: 1px solid #ddd; background: #eee; }
+        .stats { display: flex; gap: 10px; text-align: center; flex: 1; justify-content: space-around; }
         .stat-num { font-weight: bold; font-size: 18px; display: block; }
         .stat-label { font-size: 12px; color: #666; }
         
         .profile-bio-sec { padding: 0 20px 20px; }
         .btn-edit { padding: 5px 10px; border: 1px solid #dbdbdb; background: white; border-radius: 4px; font-weight: 600; font-size: 13px; margin-left: 10px; cursor: pointer; }
 
-        .posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; }
-        .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; }
+        .posts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 10px; }
+        .grid-img { width: 100%; aspect-ratio: 1/1; object-fit: cover; cursor: pointer; background: #eee; }
 
-        /* --- SWIPE --- */
-        #swipe-view { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: #f5f5f5; }
-        .card-stack { width: 90%; height: 60vh; position: relative; }
+        /* --- SWIPE (Fix Layout) --- */
+        #swipe-view { 
+            display: none; /* Controlado por JS */
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            background: #f5f5f5; 
+        }
+        .card-stack { width: 90%; height: 60%; position: relative; margin-top: 20px; }
         .card { 
             width: 100%; height: 100%; border-radius: 15px; overflow: hidden; position: absolute; 
             background: white; box-shadow: 0 10px 20px rgba(0,0,0,0.1); 
         }
         .card img { width: 100%; height: 100%; object-fit: cover; }
         .card-grad { position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
-        .card-info { position: absolute; bottom: 20px; left: 20px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-        .swipe-btns { margin-top: 30px; display: flex; gap: 40px; }
-        .s-btn { width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; transition: transform 0.2s; }
+        .card-info { position: absolute; bottom: 20px; left: 20px; color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.5); z-index: 2; }
+        
+        .swipe-btns { 
+            margin-top: 20px; display: flex; gap: 30px; padding-bottom: 20px; 
+            z-index: 5; /* Asegura que esten encima */
+        }
+        .s-btn { 
+            width: 60px; height: 60px; border-radius: 50%; border: none; font-size: 24px; cursor: pointer; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1); display: flex; justify-content: center; align-items: center; 
+            transition: transform 0.2s; background: white;
+        }
         .s-btn:active { transform: scale(0.9); }
 
         /* --- OVERLAYS --- */
@@ -117,7 +147,8 @@
         .nav-item.active { color: var(--primary); }
 
         /* FAB */
-        .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; }
+        .fab { position: absolute; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; color: white; display: flex; justify-content: center; align-items: center; font-size: 24px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 400; transition: transform 0.2s;}
+        .fab:active { transform: scale(0.9); }
 
         /* CHAT LIST */
         .chat-item { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #eee; cursor: pointer; }
@@ -155,16 +186,16 @@
             <input type="text" id="edit-name" placeholder="Tu Nombre">
             <input type="text" id="edit-bio" placeholder="Tu Biografía">
             <button class="btn-primary" onclick="saveProfile()">Guardar Cambios</button>
-            <button class="btn-secondary" style="width:100%; padding:10px; border-radius:8px;" onclick="document.getElementById('edit-modal').classList.remove('active')">Cancelar</button>
+            <button class="btn-secondary" onclick="document.getElementById('edit-modal').classList.remove('active')">Cancelar</button>
         </div>
     </div>
 
     <div id="upload-modal" class="modal" onclick="if(event.target===this) this.classList.remove('active')">
         <div class="modal-box" style="text-align: center;">
-            <h3>Crear Contenido</h3>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px; padding:15px;" onclick="triggerUpload('post')"><i class="fas fa-camera"></i> Nuevo Post</button>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px; padding:15px;" onclick="triggerUpload('story')"><i class="fas fa-circle-notch"></i> Nueva Historia</button>
-            <button class="btn-secondary" style="width:100%; margin-bottom:10px; padding:15px;" onclick="triggerUpload('profile')"><i class="fas fa-user"></i> Cambiar Foto Perfil</button>
+            <h3 style="margin-bottom:15px">Crear Contenido</h3>
+            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('post')"><i class="fas fa-camera"></i> Nuevo Post</button>
+            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('story')"><i class="fas fa-circle-notch"></i> Nueva Historia</button>
+            <button class="btn-secondary" style="margin-bottom:10px;" onclick="triggerUpload('profile')"><i class="fas fa-user"></i> Cambiar Foto Perfil</button>
         </div>
     </div>
     
@@ -194,7 +225,10 @@
 
         <div id="swipe-view" class="view">
             <div id="card-container" class="card-stack">
-                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999;">No hay perfiles nuevos</div>
+                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column;">
+                    <i class="fas fa-search" style="font-size:40px; margin-bottom:10px; opacity:0.3"></i>
+                    <span>No hay perfiles nuevos</span>
+                </div>
             </div>
             <div class="swipe-btns">
                 <button class="s-btn" style="color: #ff4b4b; border: 2px solid #ff4b4b;" onclick="handleSwipe('pass')"><i class="fas fa-times"></i></button>
@@ -204,7 +238,8 @@
 
         <div id="chat-list-view" class="view">
             <h2 style="padding: 20px;">Mensajes</h2>
-            <div id="matches-list"></div>
+            <div id="matches-list">
+                </div>
         </div>
 
         <div id="profile-view" class="view">
@@ -217,10 +252,12 @@
                 </div>
             </div>
             <div class="profile-bio-sec">
-                <h3 id="p-name" style="display:inline-block; margin-right: 5px;">Usuario</h3>
-                <button class="btn-edit" onclick="openEditProfile()">Editar</button>
-                <div id="p-bio" style="color:#555; margin-top:5px; font-size: 14px;"></div>
-                <button class="btn-secondary" onclick="logout()" style="margin-top:15px; font-size: 12px; padding: 5px 10px;">Cerrar Sesión</button>
+                <div style="display:flex; align-items:center; margin-bottom:5px;">
+                    <h3 id="p-name" style="margin-right: 5px;">Usuario</h3>
+                    <button class="btn-edit" onclick="openEditProfile()">Editar</button>
+                </div>
+                <div id="p-bio" style="color:#555; font-size: 14px;"></div>
+                <button class="btn-secondary" onclick="logout()" style="margin-top:15px; font-size: 12px; padding: 5px 10px; width:auto;">Cerrar Sesión</button>
             </div>
             
             <div style="border-top: 1px solid #eee; margin-top: 10px;">
@@ -232,13 +269,13 @@
 
         <div id="chat-view">
             <div style="padding:15px; border-bottom:1px solid #eee; display:flex; align-items:center;">
-                <i class="fas fa-arrow-left" onclick="document.getElementById('chat-view').style.display='none'" style="margin-right:15px; font-size:20px;"></i>
+                <i class="fas fa-arrow-left" onclick="document.getElementById('chat-view').style.display='none'" style="margin-right:15px; font-size:20px; cursor:pointer;"></i>
                 <b id="chat-title">Chat</b>
             </div>
             <div id="msg-container" class="msg-area"></div>
             <div style="padding:10px; display:flex; border-top:1px solid #eee;">
-                <input type="text" id="msg-input" placeholder="Escribe..." style="flex:1; margin:0; border:none;">
-                <button onclick="sendMsg()" style="border:none; background:none; color:var(--primary); font-weight:bold; padding:0 15px;">ENVIAR</button>
+                <input type="text" id="msg-input" placeholder="Escribe..." style="flex:1; margin:0; border:none; padding:10px;">
+                <button onclick="sendMsg()" style="border:none; background:none; color:var(--primary); font-weight:bold; padding:0 15px; cursor:pointer;">ENVIAR</button>
             </div>
         </div>
 
@@ -332,10 +369,14 @@
 
         // NAVIGATION
         window.navTo = (id) => {
-            // Reset color
+            // Reset color body
             document.body.style.backgroundColor = "var(--bg-color)";
+            
+            // Ocultar todos, mostrar solo el activo
             document.querySelectorAll('.view').forEach(e => e.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            
+            // Iconos navbar
             document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
             
             if(id === 'feed-view') document.querySelectorAll('.nav-item')[0].classList.add('active');
@@ -408,7 +449,7 @@
                 let html = `
                 <div class="story-item" onclick="triggerUpload('story')">
                     <div class="story-ring add"><i class="fas fa-plus" style="color:var(--primary)"></i></div>
-                    <span class="story-name">Tu historia</span>
+                    <span class="story-name">Tú</span>
                 </div>`;
                 
                 const data = snap.val();
@@ -424,8 +465,13 @@
                         const u = uSnap.val();
                         if(!u) continue;
                         
+                        // Escapar comillas para el onclick
+                        const safeName = u.name.replace(/'/g, "\\'");
+                        const safeImg = s.image.replace(/'/g, "\\'");
+                        const safeAvatar = (u.photo || '').replace(/'/g, "\\'");
+
                         html += `
-                        <div class="story-item" onclick="viewStory('${s.image}', '${u.name}', '${u.photo || ''}')">
+                        <div class="story-item" onclick="viewStory('${safeImg}', '${safeName}', '${safeAvatar}')">
                             <div class="story-ring">
                                 <img src="${u.photo || 'https://via.placeholder.com/50'}" class="story-img">
                             </div>
@@ -480,8 +526,8 @@
                         </div>
                         <img src="${p.image}" class="post-image">
                         <div class="post-actions">
-                            <i class="far fa-heart"></i>
-                            <i class="far fa-comment"></i>
+                            <i class="far fa-heart" style="cursor:pointer"></i>
+                            <i class="far fa-comment" style="cursor:pointer"></i>
                         </div>
                         <div class="post-caption"><b>${u.name}</b> ${p.caption}</div>
                     `;
@@ -578,7 +624,11 @@
                 `;
                 c.appendChild(card);
             } else {
-                c.innerHTML = '<div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999;">No hay perfiles</div>';
+                c.innerHTML = `
+                <div style="height:100%; display:flex; justify-content:center; align-items:center; color:#999; flex-direction:column;">
+                    <i class="fas fa-search" style="font-size:40px; margin-bottom:10px; opacity:0.3"></i>
+                    <span>No hay perfiles nuevos</span>
+                </div>`;
             }
         }
 
@@ -623,7 +673,7 @@
                     const d = document.createElement('div');
                     d.className = 'chat-item';
                     d.innerHTML = `
-                        <img src="${u.photo||'https://via.placeholder.com/40'}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-right:15px;">
+                        <img src="${u.photo||'https://via.placeholder.com/40'}" style="width:50px;height:50px;border-radius:50%;object-fit:cover;margin-right:15px;background:#eee">
                         <div><b>${u.name}</b></div>
                     `;
                     d.onclick = () => openChat(uid, u.name);
