@@ -549,6 +549,31 @@
         </div>
     </div>
 
+    <div id="create-post-modal" class="modal">
+        <div class="modal-box">
+            <h3>Nuevo Post</h3>
+            <input type="text" id="post-title" placeholder="Título (Opcional)">
+            <textarea id="post-desc"
+                style="width:100%; height:80px; padding:10px; border:1px solid #ddd; border-radius:8px; margin:10px 0; resize:none;"
+                placeholder="¿Qué estás pensando?"></textarea>
+
+            <div id="post-img-preview-container" style="margin-bottom:10px; display:none;">
+                <img id="post-img-preview" src=""
+                    style="width:100%; max-height:200px; object-fit:contain; border-radius:8px;">
+                <button class="btn-secondary" style="margin-top:5px; width:100%; color:red;"
+                    onclick="removePostImage()">Quitar imagen</button>
+            </div>
+
+            <button class="btn-secondary" onclick="triggerUpload('post-image-selection')"
+                style="width:100%; margin-bottom:10px;"><i class="fas fa-image"></i> Añadir Imagen (Opcional)</button>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn-secondary" style="flex:1" onclick="closeCreatePost()">Cancelar</button>
+                <button class="btn-primary" style="flex:1" onclick="publishPost()">Publicar</button>
+            </div>
+        </div>
+    </div>
+
     <div id="upload-modal" class="modal" onclick="if(event.target===this) this.classList.remove('active')">
         <div class="modal-box" style="text-align: center;">
             <h3 style="margin-bottom:15px">Crear Contenido</h3>
@@ -797,37 +822,63 @@
         }
 
         // UPLOAD
+        // UPLOAD & POST CREATION
+        let currentPostImageBase64 = null;
+
         window.triggerUpload = (type) => {
             uploadType = type;
+            if (type === 'post') {
+                document.getElementById('create-post-modal').classList.add('active');
+                document.getElementById('upload-modal').classList.remove('active');
+                return;
+            }
             document.getElementById('file-input').click();
             document.getElementById('upload-modal').classList.remove('active');
+        }
+
+        window.closeCreatePost = () => {
+            document.getElementById('create-post-modal').classList.remove('active');
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-desc').value = '';
+            removePostImage();
+        }
+
+        window.removePostImage = () => {
+            currentPostImageBase64 = null;
+            document.getElementById('post-img-preview-container').style.display = 'none';
+            document.getElementById('post-img-preview').src = '';
         }
 
         window.processFile = async () => {
             const file = document.getElementById('file-input').files[0];
             if (!file) return;
+
+            // If selecting image for new post
+            if (uploadType === 'post-image-selection') {
+                const base64 = await compressImage(file);
+                currentPostImageBase64 = base64;
+                document.getElementById('post-img-preview').src = base64;
+                document.getElementById('post-img-preview-container').style.display = 'block';
+                document.getElementById('file-input').value = "";
+                return;
+            }
+
             alert("Subiendo...");
             const base64 = await compressImage(file);
 
             if (uploadType === 'post') {
-                const k = push(child(ref(db), 'posts')).key;
-                const p = { uid: currentUser.uid, image: base64, caption: "", timestamp: Date.now() };
-                const u = {};
-                u['/posts/' + k] = p;
-                u['/users/' + currentUser.uid + '/posts/' + k] = p;
-                await update(ref(db), u);
+                // Legacy
             } else if (uploadType === 'story') {
                 await push(ref(db, 'stories'), { uid: currentUser.uid, image: base64, timestamp: Date.now() });
             } else if (uploadType === 'profile') {
                 await update(ref(db, 'users/' + currentUser.uid), { photo: base64 });
             } else if (uploadType === 'highlight') {
-                // Estructura nueva para highlight con soporte multi-historia
                 const hlRef = push(ref(db, `users/${currentUser.uid}/highlights`));
                 const hlId = hlRef.key;
                 const sRef = push(child(hlRef, 'stories'));
                 await update(ref(db), {
                     [`users/${currentUser.uid}/highlights/${hlId}/title`]: "Destacada",
-                    [`users/${currentUser.uid}/highlights/${hlId}/cover`]: base64, // Cover for preview
+                    [`users/${currentUser.uid}/highlights/${hlId}/cover`]: base64,
                     [`users/${currentUser.uid}/highlights/${hlId}/stories/${sRef.key}`]: { image: base64, timestamp: Date.now() }
                 });
             } else if (uploadType === 'highlight-story') {
@@ -837,6 +888,32 @@
 
             document.getElementById('file-input').value = "";
             alert("¡Listo!");
+        }
+
+        window.publishPost = async () => {
+            const title = document.getElementById('post-title').value;
+            const desc = document.getElementById('post-desc').value;
+
+            if (!title && !desc && !currentPostImageBase64) {
+                return alert("Escribe algo o sube una foto.");
+            }
+
+            const k = push(child(ref(db), 'posts')).key;
+            const p = {
+                uid: currentUser.uid,
+                image: currentPostImageBase64 || "",
+                title: title || "",
+                description: desc || "",
+                timestamp: Date.now()
+            };
+
+            const u = {};
+            u['/posts/' + k] = p;
+            u['/users/' + currentUser.uid + '/posts/' + k] = p;
+
+            await update(ref(db), u);
+            alert("Publicado!");
+            closeCreatePost();
         }
 
         const compressImage = (file) => {
@@ -1150,35 +1227,35 @@
                 const data = snap.val();
                 if (!data) { c.innerHTML = '<div style="padding:20px;text-align:center;color:#999">No hay posts</div>'; return; }
 
-                // Fix: Need IDs for likes. Map to array with ID.
                 const posts = Object.keys(data).map(k => ({ id: k, ...data[k] })).sort((a, b) => b.timestamp - a.timestamp);
 
-
                 for (const p of posts) {
-                    // Filtrar interrogantes en feed tambien
-                    if (!p.image || !p.image.startsWith('data:image')) continue;
-                    // Add ID to post object
-                    p.id = posts[posts.indexOf(p)].id || `post_${p.timestamp}`; // Fallback if no ID? 
-                    // Wait, Object.values loses keys. Better loop entries.
-
+                    if (!p.id) p.id = `post_${p.timestamp}`;
 
                     const uSnap = await get(ref(db, `users/${p.uid}`));
                     const u = uSnap.val();
-                    const likedSnap = await get(ref(db, `likes/${p.id}/${currentUser.uid}`));
 
-                    // Get total likes count
                     const allLikesSnap = await get(ref(db, `likes/${p.id}`));
                     const likeCount = allLikesSnap.exists() ? Object.keys(allLikesSnap.val()).length : 0;
 
+                    const likedSnap = await get(ref(db, `likes/${p.id}/${currentUser.uid}`));
                     const isLiked = likedSnap.exists();
                     const heartClass = isLiked ? "fas fa-heart" : "far fa-heart";
                     const heartColor = isLiked ? "color:red" : "";
 
                     const d = document.createElement('div');
                     d.className = 'feed-post';
+
+                    let contentHtml = '';
+                    if (p.title) contentHtml += `<div style="padding:0 10px; font-weight:bold; margin-bottom:5px;">${p.title}</div>`;
+                    if (p.image && p.image.startsWith('data:image')) {
+                        contentHtml += `<img src="${p.image}" class="post-image">`;
+                    }
+                    if (p.description) contentHtml += `<div style="padding:0 10px 10px 10px;">${p.description}</div>`;
+
                     d.innerHTML = `
                         <div class="post-header"><img src="${u.photo || ''}" class="post-avatar-sm"><span>${u.name}</span></div>
-                        <img src="${p.image}" class="post-image">
+                        ${contentHtml}
                         <div class="post-actions" style="align-items: center;">
                             <i id="like-${p.id}" class="${heartClass}" style="cursor:pointer; ${heartColor}" onclick="toggleLike('${p.id}', '${p.uid}')"></i>
                             <span id="like-count-${p.id}" style="font-size: 16px; margin-left: 5px;">${likeCount}</span>
