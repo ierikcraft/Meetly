@@ -672,6 +672,9 @@
                 <button id="btn-follow-action" class="btn-secondary" style="width:100%"
                     onclick="toggleFollow()">Seguir</button>
             </div>
+
+            <div class="highlights-sec" id="pp-highlights">
+            </div>
             <div class="posts-grid" id="pp-grid"></div>
         </div>
 
@@ -905,11 +908,14 @@
             } else if (uploadType === 'profile') {
                 await update(ref(db, 'users/' + currentUser.uid), { photo: base64 });
             } else if (uploadType === 'highlight') {
+                const hlName = prompt("Nombre de la destacada:", "Destacada");
+                if (hlName === null) return; // Cancelled
+
                 const hlRef = push(ref(db, `users/${currentUser.uid}/highlights`));
                 const hlId = hlRef.key;
                 const sRef = push(child(hlRef, 'stories'));
                 await update(ref(db), {
-                    [`users/${currentUser.uid}/highlights/${hlId}/title`]: "Destacada",
+                    [`users/${currentUser.uid}/highlights/${hlId}/title`]: hlName || "Destacada",
                     [`users/${currentUser.uid}/highlights/${hlId}/cover`]: base64,
                     [`users/${currentUser.uid}/highlights/${hlId}/stories/${sRef.key}`]: { image: base64, timestamp: Date.now() }
                 });
@@ -1019,6 +1025,28 @@
             const following = u.following ? Object.keys(u.following).length : 0;
             document.getElementById('pp-followers').innerText = followers;
             document.getElementById('pp-following').innerText = following;
+
+            // Load Highlights
+            const hlDiv = document.getElementById('pp-highlights');
+            hlDiv.innerHTML = '';
+            if (u.highlights) {
+                let hlHtml = '';
+                Object.keys(u.highlights).forEach(key => {
+                    const h = u.highlights[key];
+                    const coverImg = h.cover || h.image;
+                    const safeImg = (coverImg || "").replace(/'/g, "\\'");
+
+                    hlHtml += `
+                    <div class="highlight-item" onclick="viewStory('${safeImg}', '${h.title || "Destacada"}', '${key}', '${uid}', true)">
+                        <div class="hl-circle"><img src="${coverImg}" class="hl-img"></div>
+                        <span class="hl-title">${h.title || "Destacada"}</span>
+                    </div>`;
+                });
+                hlDiv.innerHTML = hlHtml;
+                hlDiv.style.display = 'flex';
+            } else {
+                hlDiv.style.display = 'none';
+            }
 
             // Load posts (FILTRADOS)
             const grid = document.getElementById('pp-grid');
