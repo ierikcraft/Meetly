@@ -82,6 +82,23 @@
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn-erik {
+            width: 100%;
+            padding: 12px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
         }
 
         .btn-secondary {
@@ -370,22 +387,6 @@
             font-weight: bold;
         }
 
-        .grid-item-text {
-            width: 100%;
-            aspect-ratio: 1/1;
-            background: var(--primary);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px;
-            font-size: 11px;
-            text-align: center;
-            cursor: pointer;
-            overflow: hidden;
-            font-weight: bold;
-        }
-
         /* --- NAVBAR --- */
         .navbar {
             position: absolute;
@@ -501,8 +502,24 @@
             font-size: 18px;
             padding: 10px;
         }
-
-        /* FAB REMOVED */
+        
+        /* Migration Alert */
+        #migration-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 4000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
 
 
         /* PUBLIC PROFILE OVERLAY (Para ver a otros) */
@@ -531,6 +548,13 @@
 
 <body>
 
+    <div id="migration-alert">
+        <h2 style="color:var(--primary); margin-bottom:15px;">¡Atención!</h2>
+        <p style="margin-bottom:20px; font-size:16px; line-height:1.5;">Estamos migrando a <b>ErikAccount</b>. <br>Para seguir usando Meetly y conservar tus datos, debes migrar tu cuenta ahora.</p>
+        <button class="btn-primary" onclick="startMigration()">MIGRAR A ERIKACCOUNT</button>
+        <p style="font-size:12px; margin-top:20px; color:#ccc;">Tu cuenta antigua se borrará y se creará una nueva vinculada a ErikAccount con tus datos.</p>
+    </div>
+
     <div id="story-viewer">
         <div class="story-nav-area story-nav-left" onclick="prevStory()"></div>
         <div class="story-nav-area story-nav-right" onclick="nextStory()"></div>
@@ -541,7 +565,6 @@
             <img id="sv-avatar" src="" style="width:30px;height:30px;border-radius:50%;">
             <b id="sv-name">Usuario</b>
             <div style="flex:1"></div>
-            <!-- Botones de accion -->
             <i id="sv-add-btn" class="fas fa-plus"
                 style="display:none; color:white; font-size:20px; padding:10px; cursor:pointer;"
                 onclick="addStoryToHighlight()"></i>
@@ -625,15 +648,21 @@
     <div id="app-container">
 
         <div id="auth-view" class="view active">
-            <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 20px;">Meetly</h1>
-            <div id="reg-fields" style="display:none;">
-                <input type="text" id="reg-name" placeholder="Nombre completo">
+            <h1 style="color: var(--primary); font-size: 3rem; margin-bottom: 30px;">Meetly</h1>
+            
+            <button class="btn-erik" onclick="loginWithErik()">
+                <i class="fas fa-user-circle"></i> Entrar con ErikAccount
+            </button>
+
+            <div id="legacy-auth" style="display:none; margin-top:20px; border-top:1px solid #eee; padding-top:20px;">
+                <p style="font-size:12px; color:#666; margin-bottom:10px;">Acceso Antiguo (Sólo para migrar)</p>
+                <input type="email" id="email" placeholder="Correo electrónico">
+                <input type="password" id="password" placeholder="Contraseña">
+                <button class="btn-secondary" onclick="handleLegacyAuth()">Entrar (Cuenta Antigua)</button>
             </div>
-            <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="password" placeholder="Contraseña">
-            <button class="btn-primary" id="auth-btn" onclick="handleAuth()">Entrar</button>
-            <p style="margin-top: 15px; color: var(--primary); cursor: pointer;" onclick="toggleAuth()">
-                <span id="auth-toggle-text">¿No tienes cuenta? Regístrate</span>
+
+            <p style="margin-top: 20px; font-size: 13px; color: #999; cursor: pointer; text-decoration:underline;" onclick="toggleLegacyAuth()">
+                ¿Tienes una cuenta antigua?
             </p>
         </div>
 
@@ -786,56 +815,149 @@
         let viewingUserUid = null;
 
         // Variables para manejo de eliminación
-        let currentStoryId = null; // ID of story inside highlight
-        let currentHighlightId = null; // ID of highlight container
+        let currentStoryId = null; 
+        let currentHighlightId = null; 
         let currentPostId = null;
         let storyList = [];
         let storyIndex = 0;
 
+        // --- ERIK ACCOUNT INTEGRATION START ---
+        
+        window.onload = async () => {
+            const params = new URLSearchParams(window.location.search);
+            
+            // Si viene de ErikAccount
+            if (params.has('id') && params.has('mail') && params.has('name')) {
+                const erikId = params.get('id');
+                const erikName = params.get('name');
+                const erikMail = params.get('mail');
+                
+                await handleErikLogin(erikId, erikName, erikMail);
+            } else {
+                // Comprobar Auth estándar de Firebase solo si no hay ErikParams
+                onAuthStateChanged(auth, (user) => {
+                    if (user && !currentUser) { // Si ya hay currentUser (por Erik) no hacer nada
+                        checkLegacyUser(user);
+                    } else if (!currentUser) {
+                        document.getElementById('auth-view').classList.add('active');
+                    }
+                });
+            }
+        };
 
-        // AUTH
-        let isReg = false;
-        window.toggleAuth = () => {
-            isReg = !isReg;
-            document.getElementById('reg-fields').style.display = isReg ? 'block' : 'none';
-            document.getElementById('auth-btn').innerText = isReg ? 'Registrarse' : 'Entrar';
-            document.getElementById('auth-toggle-text').innerText = isReg ? '¿Ya tienes cuenta? Entra' : '¿No tienes cuenta? Regístrate';
+        window.loginWithErik = () => {
+            window.location.href = "https://erikaccount.vercel.app?from=meetly";
+        };
+
+        async function handleErikLogin(id, name, mail) {
+            // Verificar migración pendiente
+            const pendingMigration = localStorage.getItem('pending_migration_uid');
+            
+            if (pendingMigration) {
+                // MIGRACIÓN: Copiar datos del viejo al nuevo
+                const oldRef = ref(db, `users/${pendingMigration}`);
+                const snap = await get(oldRef);
+                const oldData = snap.val();
+                
+                if (oldData) {
+                    // Preparamos datos nuevos, manteniendo lo importante y añadiendo flag new
+                    const newData = {
+                        ...oldData,
+                        name: oldData.name, // Mantenemos nombre original o usamos el de Erik? (Mejor el original)
+                        email: mail, // Actualizamos mail
+                        new: true, // Flag importante
+                        erikId: id
+                    };
+                    
+                    // Guardar en el nuevo ID
+                    await set(ref(db, `users/${id}`), newData);
+                    
+                    // Borrar el viejo
+                    await remove(ref(db, `users/${pendingMigration}`));
+                    
+                    alert("¡Migración completada con éxito!");
+                }
+                localStorage.removeItem('pending_migration_uid');
+            } else {
+                // LOGIN NORMAL ERIK: Verificar si existe
+                const userRef = ref(db, `users/${id}`);
+                const snap = await get(userRef);
+                
+                if (!snap.exists()) {
+                    // Nuevo usuario REAL de ErikAccount
+                    await set(userRef, {
+                        name: name,
+                        email: mail,
+                        bio: "¡Hola Meetly! (Via ErikAccount)",
+                        photo: "",
+                        new: true // Marcado como usuario nuevo sistema
+                    });
+                }
+            }
+
+            // Simular Login (Bypass Firebase Auth for this session)
+            currentUser = { uid: id, email: mail, displayName: name };
+            document.getElementById('auth-view').classList.remove('active');
+            document.getElementById('navbar').style.display = 'flex';
+            navTo('feed-view');
+            initData();
+            
+            // Limpiar URL para que no se re-ejecute al recargar
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        window.handleAuth = async () => {
+        // --- LEGACY AUTH & MIGRATION ---
+
+        window.toggleLegacyAuth = () => {
+            const el = document.getElementById('legacy-auth');
+            el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        }
+
+        window.handleLegacyAuth = async () => {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            const name = document.getElementById('reg-name').value;
             try {
-                if (isReg) {
-                    if (!name) return alert("Pon tu nombre");
-                    const cred = await createUserWithEmailAndPassword(auth, email, pass);
-                    // Solo creamos usuario básico, SIN posts dummy para evitar interrogantes
-                    await set(ref(db, 'users/' + cred.user.uid), { name, email, bio: "¡Hola Meetly!", photo: "" });
-                } else {
-                    await signInWithEmailAndPassword(auth, email, pass);
-                }
+                await signInWithEmailAndPassword(auth, email, pass);
+                // El onAuthStateChanged llamará a checkLegacyUser
             } catch (e) { alert(e.message); }
         }
 
-        window.logout = () => signOut(auth);
+        async function checkLegacyUser(user) {
+            const snap = await get(ref(db, `users/${user.uid}`));
+            const userData = snap.val();
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('auth-view').classList.remove('active');
-                document.getElementById('navbar').style.display = 'flex';
-                // FAB is removed
-                navTo('feed-view');
-
-                initData();
-            } else {
-                currentUser = null;
-                document.getElementById('auth-view').classList.add('active');
-                document.getElementById('navbar').style.display = 'none';
-
+            if (userData && userData.new === true) {
+                // Es un usuario moderno, pero intentó entrar por legacy auth?
+                // O es un usuario migrado.
+                alert("Esta cuenta utiliza el nuevo sistema. Por favor, usa el botón 'Entrar con ErikAccount'.");
+                signOut(auth);
+                return;
             }
-        });
+
+            // Es un usuario ANTIGUO (no tiene new: true)
+            currentUser = user;
+            document.getElementById('auth-view').classList.remove('active');
+            
+            // MOSTRAR ALERTA DE MIGRACIÓN
+            document.getElementById('migration-alert').style.display = 'flex';
+        }
+
+        window.startMigration = () => {
+            if (!currentUser) return;
+            // Guardar UID actual para recuperarlo tras el redirect
+            localStorage.setItem('pending_migration_uid', currentUser.uid);
+            // Redirigir
+            window.location.href = "https://erikaccount.vercel.app?from=meetly";
+        }
+
+        window.logout = () => {
+            signOut(auth);
+            currentUser = null;
+            location.reload(); // Recargar para limpiar estados
+        }
+
+        // --- END ERIK INTEGRATION ---
+
 
         function initData() {
             loadFeed();
@@ -1324,6 +1446,8 @@
 
                     const uSnap = await get(ref(db, `users/${p.uid}`));
                     const u = uSnap.val();
+                    
+                    if(!u) continue; // Skip if user deleted
 
                     const allLikesSnap = await get(ref(db, `likes/${p.id}`));
                     const likeCount = allLikesSnap.exists() ? Object.keys(allLikesSnap.val()).length : 0;
