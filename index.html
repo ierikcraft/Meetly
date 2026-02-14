@@ -1277,22 +1277,41 @@
         // LIKE FUNCTIONALITY
         window.toggleLike = async (pid, uid) => {
             const likeRef = ref(db, `likes/${pid}/${currentUser.uid}`);
-            const countSpan = document.getElementById(`like-count-${pid}`);
-            let count = parseInt(countSpan.innerText) || 0;
+            const postRef = ref(db, `posts/${pid}`);
 
-            const snap = await get(likeRef);
-            if (snap.exists()) {
+            const countSpan = document.getElementById(`like-count-${pid}`);
+
+            // 1. Verificar estado actual del like del usuario
+            const likeSnap = await get(likeRef);
+            const isLiked = likeSnap.exists();
+
+            // 2. Obtener el post para saber el contador actual (o usar 0 si no existe)
+            const postSnap = await get(postRef);
+            if (!postSnap.exists()) return;
+            let currentLikes = postSnap.val().likes || 0;
+
+            if (isLiked) {
+                // Quitar like
                 await remove(likeRef);
+                currentLikes--;
+                if (currentLikes < 0) currentLikes = 0; // Evitar negativos
+
                 document.getElementById(`like-${pid}`).className = "far fa-heart";
                 document.getElementById(`like-${pid}`).style.color = "";
-                count--;
             } else {
+                // Poner like
                 await set(likeRef, true);
+                currentLikes++;
+
                 document.getElementById(`like-${pid}`).className = "fas fa-heart";
                 document.getElementById(`like-${pid}`).style.color = "red";
-                count++;
             }
-            countSpan.innerText = count;
+
+            // 3. Actualizar el contador en el Post
+            await update(postRef, { likes: currentLikes });
+
+            // 4. Actualizar UI
+            countSpan.innerText = currentLikes;
         }
 
 
@@ -1325,8 +1344,8 @@
                     const uSnap = await get(ref(db, `users/${p.uid}`));
                     const u = uSnap.val();
 
-                    const allLikesSnap = await get(ref(db, `likes/${p.id}`));
-                    const likeCount = allLikesSnap.exists() ? Object.keys(allLikesSnap.val()).length : 0;
+                    // Usamos el contador directo del post, si existe
+                    const likeCount = p.likes || 0;
 
                     const likedSnap = await get(ref(db, `likes/${p.id}/${currentUser.uid}`));
                     const isLiked = likedSnap.exists();
